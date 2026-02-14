@@ -4,37 +4,38 @@ from playhouse.sqlite_ext import FTS5Model, SearchField, RowIDField
 # Proxy for late initialization
 db = DatabaseProxy()
 
+
 class BaseModel(Model):
     class Meta:
         database = db
 
+
 class Book(BaseModel):
     name = CharField(unique=True)
 
+
 class Chapter(BaseModel):
-    book = ForeignKeyField(Book, backref='chapters')
+    book = ForeignKeyField(Book, backref="chapters")
     number = IntegerField()
 
     class Meta:
         # Ensuring (book, number) is unique
-        indexes = (
-            (('book', 'number'), True),
-        )
+        indexes = ((("book", "number"), True),)
+
 
 class Verse(BaseModel):
-    chapter = ForeignKeyField(Chapter, backref='verses')
+    chapter = ForeignKeyField(Chapter, backref="verses")
     number = IntegerField()
-    text = TextField() # Using KJV as primary for now
-    text_chr = TextField(null=True) # Cherokee translation
-    lemma_text = TextField(null=True) # Lemmatized version of text
+    text = TextField()  # Using KJV as primary for now
+    text_chr = TextField(null=True)  # Cherokee translation
+    lemma_text = TextField(null=True)  # Lemmatized version of text
     is_command = BooleanField(default=False)
     is_hypothetical = BooleanField(default=False)
-    
+
     class Meta:
         # Ensuring (chapter, number) is unique
-        indexes = (
-            (('chapter', 'number'), True),
-        )
+        indexes = ((("chapter", "number"), True),)
+
 
 # Full Text Search Index
 class VerseIndex(FTS5Model):
@@ -46,25 +47,24 @@ class VerseIndex(FTS5Model):
         database = db
         # Using the content option to point to the Verse table
         # This keeps the index small and synchronized
-        options = {'content': Verse}
+        options = {"content": Verse}
+
 
 class Entity(BaseModel):
     name = CharField()
-    label = CharField() # PERSON, GPE, etc.
-    
+    label = CharField()  # PERSON, GPE, etc.
+
     class Meta:
-        indexes = (
-            (('name', 'label'), True), # Unique constraint on name+label
-        )
+        indexes = ((("name", "label"), True),)  # Unique constraint on name+label
+
 
 class VerseEntity(BaseModel):
-    verse = ForeignKeyField(Verse, backref='entities')
-    entity = ForeignKeyField(Entity, backref='verses')
-    
+    verse = ForeignKeyField(Verse, backref="entities")
+    entity = ForeignKeyField(Entity, backref="verses")
+
     class Meta:
-        indexes = (
-            (('verse', 'entity'), True),
-        )
+        indexes = ((("verse", "entity"), True),)
+
 
 class VerbStat(BaseModel):
     form = CharField(unique=True)
@@ -72,12 +72,14 @@ class VerbStat(BaseModel):
     matrix_count = IntegerField(default=0)
     total_count = IntegerField(default=0)
 
-def init_db(db_path='bible.db'):
+
+def init_db(db_path="bible.db"):
     database = SqliteDatabase(db_path)
     db.initialize(database)
     db.connect()
     db.create_tables([Book, Chapter, Verse, VerseIndex, Entity, VerseEntity, VerbStat])
     db.close()
+
 
 if __name__ == "__main__":
     init_db()
