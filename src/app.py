@@ -1,6 +1,6 @@
 from flask import Flask, jsonify, request, abort, render_template, redirect, url_for
 from peewee import SqliteDatabase
-from src.models import db, Sentence
+from src.models import db, Sentence, SentenceTag
 from src.search import SearchEngine
 import time
 
@@ -30,9 +30,16 @@ def _db_close(exc):
 
 @app.route("/api/search", methods=["GET"])
 def search_sentences():
-    query = request.args.get("q")
-    if not query:
-        abort(400, description="Missing 'q' parameter")
+    query = request.args.get("q", "")
+
+    # Check if we have filters
+    has_filters = any(
+        k in request.args
+        for k in ["is_command", "is_hypothetical", "is_time_clause", "tag"]
+    )
+
+    if not query and not has_filters:
+        abort(400, description="Missing 'q' parameter or filters")
 
     try:
         limit = int(request.args.get("limit", 10))
@@ -45,6 +52,10 @@ def search_sentences():
         is_hypothetical = request.args.get("is_hypothetical")
         if is_hypothetical is not None:
             is_hypothetical = is_hypothetical.lower() == "true"
+        is_time_clause = request.args.get("is_time_clause")
+        if is_time_clause is not None:
+            is_time_clause = is_time_clause.lower() == "true"
+        tag_filter = request.args.get("tag")
     except ValueError:
         abort(400, description="Invalid limit or offset")
 
@@ -57,6 +68,8 @@ def search_sentences():
         sort=sort,
         is_command=is_command,
         is_hypothetical=is_hypothetical,
+        is_time_clause=is_time_clause,
+        tag_filter=tag_filter,
     )
     duration = time.time() - start_time
 
@@ -70,6 +83,7 @@ def search_sentences():
                     "phonetic": r.phonetic,
                     "audio": r.audio,
                     "lemma": r.lemma_text,
+                    "tags": getattr(r, "tags", []),
                 }
                 for r in results
             ],
@@ -81,6 +95,38 @@ def search_sentences():
     )
 
 
+@app.route("/api/sentences/<ref_id>/tags", methods=["POST"])
+def add_tag(ref_id):
+    data = request.json
+    word_index = data.get("word_index")
+    tag = data.get("tag")
+
+    if word_index is None or not tag:
+        abort(400, description="Missing word_index or tag")
+
+    try:
+        # Use primary key of SentenceTag if defined, or just replace by unique constraint
+        SentenceTag.replace(ref_id=ref_id, word_index=word_index, tag=tag).execute()
+        return jsonify({"status": "success"})
+    except Exception as e:
+        return jsonify({"status": "error", "message": str(e)}), 500
+
+
+@app.route("/api/sentences/<ref_id>/tags", methods=["DELETE"])
+def remove_tag(ref_id):
+    data = request.json
+    word_index = data.get("word_index")
+
+    if word_index is None:
+        abort(400, description="Missing word_index")
+
+    query = SentenceTag.delete().where(
+        (SentenceTag.ref_id == ref_id) & (SentenceTag.word_index == word_index)
+    )
+    rows = query.execute()
+    return jsonify({"status": "success", "deleted": rows})
+
+
 # Frontend Routes
 @app.route("/")
 def index():
@@ -89,8 +135,21 @@ def index():
 
 @app.route("/search")
 def search_page():
-    query = request.args.get("q")
-    if not query:
+    query = request.args.get("q", "")
+
+    # Check if we have filters
+    has_filters = any(
+        k in request.args
+        for k in [
+            "is_command",
+            "is_hypothetical",
+            "is_time_clause",
+            "tag",
+            "subclause_types",
+        ]
+    )
+
+    if not query and not has_filters:
         return redirect(url_for("index"))
 
     page = request.args.get("page", 1, type=int)
@@ -98,6 +157,8 @@ def search_page():
     sort = request.args.get("sort", "rank").strip()
     is_command = request.args.get("is_command") == "on"
     is_hypothetical = request.args.get("is_hypothetical") == "on"
+    is_time_clause = request.args.get("is_time_clause") == "on"
+    tag_filter = request.args.get("tag", "").strip() or None
 
     # Subclause types from multi-select or multiple checkboxes
     selected_subclauses = request.args.getlist("subclause_types")
@@ -128,6 +189,8 @@ def search_page():
         is_command=is_command or None,
         is_hypothetical=is_hypothetical or None,
         subclause_types=selected_subclauses or None,
+        is_time_clause=is_time_clause or None,
+        tag_filter=tag_filter,
     )
     duration = time.time() - start_time
 
@@ -142,6 +205,8 @@ def search_page():
         sort=sort,
         is_command=is_command,
         is_hypothetical=is_hypothetical,
+        is_time_clause=is_time_clause,
+        tag_filter=tag_filter,
         subclause_labels=SUBCLAUSE_LABELS,
         selected_subclauses=selected_subclauses,
     )

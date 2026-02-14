@@ -1,6 +1,6 @@
 import spacy
 from peewee import fn
-from src.models import db, Sentence, SentenceIndex
+from src.models import db, Sentence, SentenceIndex, SentenceTag
 
 
 class SearchEngine:
@@ -35,6 +35,8 @@ class SearchEngine:
         is_command=None,
         is_hypothetical=None,
         subclause_types=None,
+        is_time_clause=None,
+        tag_filter=None,
     ):
         """
         Performs a full-text search on sentences using BM25 ranking.
@@ -96,7 +98,33 @@ class SearchEngine:
 
                 q = q.where(reduce(operator.or_, clause_filters))
 
-        # Sorting
+                q = q.where(reduce(operator.or_, clause_filters))
+
+        if is_time_clause:
+            # Must have advcl and contain time keywords
+            # This is a heuristic.
+            q = q.where(Sentence.subclause_types.contains("advcl"))
+            time_keywords = [
+                "when",
+                "while",
+                "after",
+                "before",
+                "until",
+                "since",
+                "as soon as",
+            ]
+            # Peewee OR for keywords
+            from peewee import reduce, operator
+
+            keyword_filters = [Sentence.english.contains(kw) for kw in time_keywords]
+            q = q.where(reduce(operator.or_, keyword_filters))
+
+        if tag_filter:
+            q = (
+                q.join(SentenceTag, on=(Sentence.ref_id == SentenceTag.ref_id))
+                .where(SentenceTag.tag == tag_filter)
+                .distinct()
+            )
         if sort == "length_asc":
             q = q.order_by(fn.length(Sentence.syllabary))
         elif sort == "length_desc":
@@ -106,5 +134,21 @@ class SearchEngine:
         else:
             q = q.order_by(Sentence.ref_id)
 
-        results = q.limit(limit).offset(offset)
-        return list(results)
+        results = list(q.limit(limit).offset(offset))
+
+        # Attach tags to results
+        if results:
+            ref_ids = [r.ref_id for r in results]
+            tags = SentenceTag.select().where(SentenceTag.ref_id.in_(ref_ids))
+
+            # Map ref_id -> list of tags
+            tag_map = {}
+            for t in tags:
+                if t.ref_id not in tag_map:
+                    tag_map[t.ref_id] = []
+                tag_map[t.ref_id].append({"word_index": t.word_index, "tag": t.tag})
+
+            for r in results:
+                r.tags = tag_map.get(r.ref_id, [])
+
+        return results

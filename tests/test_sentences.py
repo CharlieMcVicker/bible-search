@@ -1,7 +1,7 @@
 import pytest
 import os
 from peewee import SqliteDatabase
-from src.models import db, Sentence, SentenceIndex
+from src.models import db, Sentence, SentenceIndex, SentenceTag
 from src.search import SearchEngine
 
 
@@ -11,7 +11,7 @@ def test_db_session():
     test_db = SqliteDatabase(db_path)
     db.initialize(test_db)
     db.connect()
-    db.create_tables([Sentence, SentenceIndex])
+    db.create_tables([Sentence, SentenceIndex, SentenceTag])
 
     # Populate with sample data
     Sentence.create(
@@ -46,7 +46,7 @@ def test_db_session():
     yield db_path
 
     if not test_db.is_closed():
-        db.drop_tables([Sentence, SentenceIndex])
+        db.drop_tables([Sentence, SentenceIndex, SentenceTag])
         db.close()
     if os.path.exists(db_path):
         os.remove(db_path)
