@@ -26,6 +26,8 @@ class Verse(BaseModel):
     number = IntegerField()
     text = TextField() # Using KJV as primary for now
     lemma_text = TextField(null=True) # Lemmatized version of text
+    is_command = BooleanField(default=False)
+    is_hypothetical = BooleanField(default=False)
     
     class Meta:
         # Ensuring (chapter, number) is unique

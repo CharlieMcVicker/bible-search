@@ -83,11 +83,13 @@ def search_verses():
         offset = int(request.args.get('offset', 0))
         use_lemma = request.args.get('use_lemma', 'false').lower() == 'true'
         entity = request.args.get('entity')
+        construction = request.args.get('construction') # command or hypothetical
     except ValueError:
         abort(400, description="Invalid limit or offset")
         
     start_time = time.time()
-    results = searcher.search(query, limit=limit, offset=offset, use_lemma=use_lemma, entity_filter=entity)
+    results = searcher.search(query, limit=limit, offset=offset, use_lemma=use_lemma, 
+                              entity_filter=entity, construction_filter=construction)
     duration = time.time() - start_time
     
     return jsonify({
@@ -96,7 +98,9 @@ def search_verses():
             'chapter': r.chapter.number,
             'verse': r.number,
             'text': r.text,
-            'lemma': r.lemma_text
+            'lemma': r.lemma_text,
+            'is_command': r.is_command,
+            'is_hypothetical': r.is_hypothetical
         } for r in results],
         'meta': {
             'count': len(results), # This is page count
@@ -179,14 +183,18 @@ def search_page():
     page = request.args.get('page', 1, type=int)
     use_lemma = request.args.get('use_lemma', 'off') == 'on' # Checkbox sends 'on'
     entity = request.args.get('entity', '').strip()
+    construction = request.args.get('construction', '').strip()
+    
     if not entity:
         entity = None
+    if not construction:
+        construction = None
         
     per_page = 20
     offset = (page - 1) * per_page
     
     # Check if it's a reference (only if not doing advanced search)
-    if not use_lemma and not entity and page == 1:
+    if not use_lemma and not entity and not construction and page == 1:
         from src.nlp import extract_bible_references
         ref_meta = extract_bible_references(query)
         
@@ -200,7 +208,8 @@ def search_page():
 
     # Otherwise text search
     start_time = time.time()
-    results = searcher.search(query, limit=per_page, offset=offset, use_lemma=use_lemma, entity_filter=entity)
+    results = searcher.search(query, limit=per_page, offset=offset, use_lemma=use_lemma, 
+                              entity_filter=entity, construction_filter=construction)
     duration = time.time() - start_time
     
     # Get top entities for refinement as well
@@ -219,6 +228,7 @@ def search_page():
                            per_page=per_page,
                            use_lemma=use_lemma,
                            entity=entity,
+                           construction=construction,
                            top_entities=top_entities)
 
 if __name__ == "__main__":

@@ -24,8 +24,18 @@
                         <option value="{{ ent.name }}">
                         {% endfor %}
                      </datalist>
-                     <button class="btn btn-outline-secondary" type="submit">Go</button>
                 </div>
+
+                <div class="input-group input-group-sm">
+                    <span class="input-group-text">Type</span>
+                    <select class="form-select" name="construction" onchange="this.form.submit()">
+                        <option value="">All</option>
+                        <option value="command" {% if construction == 'command' %}selected{% endif %}>Commands</option>
+                        <option value="hypothetical" {% if construction == 'hypothetical' %}selected{% endif %}>Hypotheticals</option>
+                    </select>
+                </div>
+                
+                <button class="btn btn-sm btn-outline-secondary" type="submit">Go</button>
             </form>
         </div>
         
@@ -34,6 +44,7 @@
                 Found {{ count }} result(s) on page {{ page }}.
                 {% if use_lemma %}<span class="badge bg-info text-dark">Lemma Search</span>{% endif %}
                 {% if entity %}<span class="badge bg-secondary">Entity: {{ entity }}</span>{% endif %}
+                {% if construction %}<span class="badge bg-warning text-dark">{{ construction|capitalize }}</span>{% endif %}
             </p>
             
             <div class="list-group mb-4">
@@ -45,6 +56,10 @@
                                 {{ verse.chapter.book.name }} {{ verse.chapter.number }}:{{ verse.number }}
                             </a>
                         </h5>
+                        <div>
+                            {% if verse.is_command %}<span class="badge rounded-pill bg-warning text-dark">Command</span>{% endif %}
+                            {% if verse.is_hypothetical %}<span class="badge rounded-pill bg-info text-dark">Hypothetical</span>{% endif %}
+                        </div>
                     </div>
                     <p class="mb-1">{{ verse.text }}</p>
                     {% if verse.lemma_text and use_lemma %}
@@ -59,7 +74,7 @@
                 <ul class="pagination justify-content-center">
                     {% if page > 1 %}
                     <li class="page-item">
-                        <a class="page-link" href="{{ url_for('search_page', q=query, page=page-1, use_lemma='on' if use_lemma else None, entity=entity) }}">Previous</a>
+                        <a class="page-link" href="{{ url_for('search_page', q=query, page=page-1, use_lemma='on' if use_lemma else None, entity=entity, construction=construction) }}">Previous</a>
                     </li>
                     {% else %}
                     <li class="page-item disabled">
@@ -73,7 +88,7 @@
 
                     {% if verses|length == per_page %}
                     <li class="page-item">
-                        <a class="page-link" href="{{ url_for('search_page', q=query, page=page+1, use_lemma='on' if use_lemma else None, entity=entity) }}">Next</a>
+                        <a class="page-link" href="{{ url_for('search_page', q=query, page=page+1, use_lemma='on' if use_lemma else None, entity=entity, construction=construction) }}">Next</a>
                     </li>
                     {% else %}
                     <li class="page-item disabled">

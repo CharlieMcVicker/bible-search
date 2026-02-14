@@ -40,12 +40,13 @@ class BibleSearch:
         except Verse.DoesNotExist:
             return None
 
-    def search(self, query, limit=10, offset=0, use_lemma=False, entity_filter=None):
+    def search(self, query, limit=10, offset=0, use_lemma=False, entity_filter=None, construction_filter=None):
         """
         Performs a full-text search on verses using BM25 ranking.
         
         :param use_lemma: If True, lemmatizes the query before searching.
         :param entity_filter: Optional string (Entity Name) to filter results.
+        :param construction_filter: Optional string ('command' or 'hypothetical') to filter.
         """
         
         search_query = query
@@ -63,10 +64,6 @@ class BibleSearch:
             search_query = f"lemma_text: {search_query}"
         else:
             # Restrict to text column to avoid matching against lemma_text
-            # Use column filter syntax provided by FTS5 if possible, or Peewee's field match
-            # But simple query string injection "text: ..." is risky if query has operators.
-            # Ideally we use VerseIndex.text.match(query) but Peewee FTS5Model usually uses the model match.
-            # Let's try to wrap it:
             search_query = f"text: {search_query}"
 
         # Base query
@@ -82,6 +79,12 @@ class BibleSearch:
                  .join(VerseEntity, on=(VerseEntity.verse == Verse.id))
                  .join(Entity, on=(VerseEntity.entity == Entity.id))
                  .where(Entity.name == entity_filter))
+        
+        # Apply Construction Filter
+        if construction_filter == 'command':
+            q = q.where(Verse.is_command == True)
+        elif construction_filter == 'hypothetical':
+            q = q.where(Verse.is_hypothetical == True)
 
         results = (q
                    .order_by(VerseIndex.rank())

@@ -13,14 +13,14 @@ def ingest_data():
         return
 
     print("Loading spaCy model...")
-    # Disable parser and textcat for speed, we need tagger (for lemma) and ner
+    # Enable parser for command detection
     try:
-        nlp = spacy.load("en_core_web_sm", disable=["parser", "textcat"])
+        nlp = spacy.load("en_core_web_sm", disable=["textcat"])
     except OSError:
         print("Downloading spaCy model...")
         from spacy.cli import download
         download("en_core_web_sm")
-        nlp = spacy.load("en_core_web_sm", disable=["parser", "textcat"])
+        nlp = spacy.load("en_core_web_sm", disable=["textcat"])
 
     print("Connecting to database...")
     database = SqliteDatabase('bible.db')
@@ -36,16 +36,60 @@ def ingest_data():
     entity_cache = {} # (name, label) -> entity_instance
 
     def process_verse(chapter, verse_num, text):
+        # We need the parser for sentence/dependency structure to detect commands better
+        # but for speed we kept it disabled earlier. Let's re-enable if needed.
+        # Actually, let's try with a few rules.
         doc = nlp(text)
         
         # Lemma text
         lemma_text = " ".join([token.lemma_ for token in doc])
         
+        # Grammatical Construction Detection
+        is_command = False
+        is_hypothetical = False
+        
+        # Simple Hypothetical: contains "if", "unless", "except" (often conditional in KJV)
+        # or modal "would", "should"
+        conditional_keywords = {"if", "unless", "except"}
+        if any(token.lower_ in conditional_keywords for token in doc):
+            is_hypothetical = True
+        elif any(token.lower_ in {"would", "should"} for token in doc):
+             # Rough check for conditional mood
+             is_hypothetical = True
+
+        # Simple Command: Starts with a verb (Imperative)
+        # In KJV: "Go", "Come", "Hearken", "Do", "Take"
+        # Often these are at the start of the verse or after a punctuation.
+        first_token = None
+        for token in doc:
+            if not token.is_punct and not token.is_space:
+                first_token = token
+                break
+        
+        if first_token:
+            # If the first non-punct token is a verb and not a participle/gerund
+            # and doesn't have a clear subject before it (which it doesn't, it's first)
+            if first_token.pos_ == "VERB" and first_token.dep_ in ("ROOT", "advcl"):
+                # Check for "Thou shalt" - not a simple command in structure but in meaning.
+                # But "Go ye" is definitely a command.
+                is_command = True
+            
+            # Additional KJV specific: "Thou shalt" / "Ye shall"
+            # These are indicative future but function as commands.
+            # User might want to find these as "Commands".
+            if first_token.lower_ in {"thou", "ye", "you"}:
+                # Check if next token is "shalt", "shall"
+                next_token = doc[first_token.i + 1] if first_token.i + 1 < len(doc) else None
+                if next_token and next_token.lower_ in {"shalt", "shall"}:
+                    is_command = True
+
         verse = Verse.create(
             chapter=chapter, 
             number=verse_num, 
             text=text,
-            lemma_text=lemma_text
+            lemma_text=lemma_text,
+            is_command=is_command,
+            is_hypothetical=is_hypothetical
         )
         
         # Entities
