@@ -86,6 +86,7 @@ def search_verses():
         use_lemma = request.args.get("use_lemma", "false").lower() == "true"
         entity = request.args.get("entity")
         construction = request.args.get("construction")  # command or hypothetical
+        sort = request.args.get("sort")
     except ValueError:
         abort(400, description="Invalid limit or offset")
 
@@ -97,6 +98,7 @@ def search_verses():
         use_lemma=use_lemma,
         entity_filter=entity,
         construction_filter=construction,
+        sort=sort,
     )
     duration = time.time() - start_time
 
@@ -218,6 +220,7 @@ def search_page():
     use_lemma = request.args.get("use_lemma", "off") == "on"  # Checkbox sends 'on'
     entity = request.args.get("entity", "").strip()
     construction = request.args.get("construction", "").strip()
+    sort = request.args.get("sort", "rank").strip()
 
     if not entity:
         entity = None
@@ -252,6 +255,7 @@ def search_page():
         use_lemma=use_lemma,
         entity_filter=entity,
         construction_filter=construction,
+        sort=sort,
     )
     duration = time.time() - start_time
 
@@ -274,6 +278,7 @@ def search_page():
         use_lemma=use_lemma,
         entity=entity,
         construction=construction,
+        sort=sort,
         top_entities=top_entities,
     )
 
@@ -286,4 +291,4 @@ def analysis_page():
 
 
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=4000, debug=False)
+    app.run(host="0.0.0.0", port=4000, debug=True)

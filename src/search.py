@@ -55,6 +55,7 @@ class BibleSearch:
         use_lemma=False,
         entity_filter=None,
         construction_filter=None,
+        sort=None,
     ):
         """
         Performs a full-text search on verses using BM25 ranking.
@@ -62,6 +63,7 @@ class BibleSearch:
         :param use_lemma: If True, lemmatizes the query before searching.
         :param entity_filter: Optional string (Entity Name) to filter results.
         :param construction_filter: Optional string ('command' or 'hypothetical') to filter.
+        :param sort: Sorting method ('length_asc', 'length_desc', or None for rank).
         """
 
         search_query = query
@@ -105,7 +107,16 @@ class BibleSearch:
         elif construction_filter == "hypothetical":
             q = q.where(Verse.is_hypothetical == True)
 
-        results = q.order_by(VerseIndex.rank()).limit(limit).offset(offset)
+        # Apply Sorting
+        if sort == "length_asc":
+            q = q.order_by(fn.length(Verse.text))
+        elif sort == "length_desc":
+            q = q.order_by(fn.length(Verse.text).desc())
+        else:
+            # Default to relevance (BM25 rank)
+            q = q.order_by(VerseIndex.rank())
+
+        results = q.limit(limit).offset(offset)
 
         return list(results)
 

@@ -1,121 +1,185 @@
-{% extends "base.html" %}
-
-{% block title %}Search Results - Bible Search{% endblock %}
-
-{% block content %}
+{% extends "base.html" %} {% block title %}Search Results - Bible Search{%
+endblock %} {% block content %}
 <div class="row">
-    <div class="col-12">
-        <div class="d-flex justify-content-between align-items-center mb-4">
-            <h2 class="mb-0">Results for "{{ query }}"</h2>
-            <!-- Refinement Form -->
-            <form action="{{ url_for('search_page') }}" method="GET" class="d-flex align-items-center gap-2">
-                <input type="hidden" name="q" value="{{ query }}">
-                
-                <div class="form-check form-switch mb-0">
-                    <input class="form-check-input" type="checkbox" id="useLemmaRefine" name="use_lemma" {% if use_lemma %}checked{% endif %} onchange="this.form.submit()">
-                    <label class="form-check-label text-nowrap" for="useLemmaRefine">Word Roots</label>
-                </div>
-                
-                <div class="input-group input-group-sm">
-                     <span class="input-group-text">Entity</span>
-                     <input type="text" class="form-control" name="entity" value="{{ entity or '' }}" placeholder="Filter..." list="entity-list-refine" style="max-width: 120px;">
-                     <datalist id="entity-list-refine">
-                        {% for ent in top_entities %}
-                        <option value="{{ ent.name }}">
-                        {% endfor %}
-                     </datalist>
-                </div>
+  <div class="col-12">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+      <h2 class="mb-0">Results for "{{ query }}"</h2>
+      <!-- Refinement Form -->
+      <form
+        action="{{ url_for('search_page') }}"
+        method="GET"
+        class="d-flex align-items-center gap-2"
+      >
+        <input type="hidden" name="q" value="{{ query }}" />
 
-                <div class="input-group input-group-sm">
-                    <span class="input-group-text">Type</span>
-                    <select class="form-select" name="construction" onchange="this.form.submit()">
-                        <option value="">All</option>
-                        <option value="command" {% if construction == 'command' %}selected{% endif %}>Commands</option>
-                        <option value="hypothetical" {% if construction == 'hypothetical' %}selected{% endif %}>Hypotheticals</option>
-                    </select>
-                </div>
-                
-                <button class="btn btn-sm btn-outline-secondary" type="submit">Go</button>
-            </form>
+        <div class="form-check form-switch mb-0">
+          <input
+            class="form-check-input"
+            type="checkbox"
+            id="useLemmaRefine"
+            name="use_lemma"
+            {%
+            if
+            use_lemma
+            %}checked{%
+            endif
+            %}
+            onchange="this.form.submit()"
+          />
+          <label class="form-check-label text-nowrap" for="useLemmaRefine"
+            >Word Roots</label
+          >
         </div>
-        
-        {% if verses %}
-            <p class="text-muted">
-                Found {{ count }} result(s) on page {{ page }}.
-                {% if use_lemma %}<span class="badge bg-info text-dark">Lemma Search</span>{% endif %}
-                {% if entity %}<span class="badge bg-secondary">Entity: {{ entity }}</span>{% endif %}
-                {% if construction %}<span class="badge bg-warning text-dark">{{ construction|capitalize }}</span>{% endif %}
-            </p>
-            
-            <div class="list-group mb-4">
-                {% for verse in verses %}
-                <div class="list-group-item list-group-item-action">
-                    <div class="d-flex w-100 justify-content-between">
-                        <h5 class="mb-1">
-                            <a href="{{ url_for('read_chapter', book_name=verse.chapter.book.name, chapter_num=verse.chapter.number) }}#verse-{{ verse.number }}">
-                                {{ verse.chapter.book.name }} {{ verse.chapter.number }}:{{ verse.number }}
-                            </a>
-                        </h5>
-                        <div>
-                            {% if verse.is_command %}<span class="badge rounded-pill bg-warning text-dark">Command</span>{% endif %}
-                            {% if verse.is_hypothetical %}<span class="badge rounded-pill bg-info text-dark">Hypothetical</span>{% endif %}
-                        </div>
-                    </div>
-                    
-                    <div class="row">
-                        <div class="col-md-6 border-end">
-                            <p class="mb-1">{{ verse.text }}</p>
-                        </div>
-                        <div class="col-md-6 ps-4">
-                            {% if verse.text_chr %}
-                            <p class="mb-1 text-muted verse-chr">{{ verse.text_chr }}</p>
-                            {% else %}
-                            <p class="mb-1 text-muted fst-italic opacity-50"><small>Translation unavailable</small></p>
-                            {% endif %}
-                        </div>
-                    </div>
 
-                    {% if verse.lemma_text and use_lemma %}
-                    <small class="text-muted">Lemma: {{ verse.lemma_text }}</small>
-                    {% endif %}
-                </div>
-                {% endfor %}
-            </div>
+        <div class="input-group input-group-sm">
+          <span class="input-group-text">Entity</span>
+          <input
+            type="text"
+            class="form-control"
+            name="entity"
+            value="{{ entity or '' }}"
+            placeholder="Filter..."
+            list="entity-list-refine"
+            style="max-width: 120px"
+          />
+          <datalist id="entity-list-refine">
+            {% for ent in top_entities %}
+            <option value="{{ ent.name }}">{% endfor %}</option>
+          </datalist>
+        </div>
 
-            <!-- Pagination -->
-            <nav aria-label="Search results pages">
-                <ul class="pagination justify-content-center">
-                    {% if page > 1 %}
-                    <li class="page-item">
-                        <a class="page-link" href="{{ url_for('search_page', q=query, page=page-1, use_lemma='on' if use_lemma else None, entity=entity, construction=construction) }}">Previous</a>
-                    </li>
-                    {% else %}
-                    <li class="page-item disabled">
-                        <span class="page-link">Previous</span>
-                    </li>
-                    {% endif %}
+        <div class="input-group input-group-sm">
+          <span class="input-group-text">Type</span>
+          <select
+            class="form-select"
+            name="construction"
+            onchange="this.form.submit()"
+          >
+            <option value="">All</option>
+            <option value="command" {{ 'selected' if construction == 'command' else '' }}>Commands</option>
+            <option value="hypothetical" {{ 'selected' if construction == 'hypothetical' else '' }}>Hypotheticals</option>
+          </select>
+        </div>
 
-                    <li class="page-item active" aria-current="page">
-                        <span class="page-link">{{ page }}</span>
-                    </li>
+        <div class="input-group input-group-sm">
+          <span class="input-group-text">Sort</span>
+          <select class="form-select" name="sort" onchange="this.form.submit()">
+            <option value="rank" {{ 'selected' if sort == 'rank' else '' }}>Relevance</option>
+            <option value="length_asc" {{ 'selected' if sort == 'length_asc' else '' }}>Shortest</option>
+            <option value="length_desc" {{ 'selected' if sort == 'length_desc' else '' }}>Longest</option>
+          </select>
+        </div>
 
-                    {% if verses|length == per_page %}
-                    <li class="page-item">
-                        <a class="page-link" href="{{ url_for('search_page', q=query, page=page+1, use_lemma='on' if use_lemma else None, entity=entity, construction=construction) }}">Next</a>
-                    </li>
-                    {% else %}
-                    <li class="page-item disabled">
-                        <span class="page-link">Next</span>
-                    </li>
-                    {% endif %}
-                </ul>
-            </nav>
-
-        {% else %}
-            <div class="alert alert-info">
-                No results found for "{{ query }}"{% if entity %} with entity "{{ entity }}"{% endif %}.
-            </div>
-        {% endif %}
+        <button class="btn btn-sm btn-outline-secondary" type="submit">
+          Go
+        </button>
+      </form>
     </div>
+
+    {% if verses %}
+    <p class="text-muted">
+      Found {{ count }} result(s) on page {{ page }}. {% if use_lemma %}<span
+        class="badge bg-info text-dark"
+        >Lemma Search</span
+      >{% endif %} {% if entity %}<span class="badge bg-secondary"
+        >Entity: {{ entity }}</span
+      >{% endif %} {% if construction %}<span class="badge bg-warning text-dark"
+        >{{ construction|capitalize }}</span
+      >{% endif %} {% if sort == 'length_asc' %}<span class="badge bg-primary"
+        >Shortest First</span
+      >{% endif %} {% if sort == 'length_desc' %}<span class="badge bg-primary"
+        >Longest First</span
+      >{% endif %}
+    </p>
+
+    <div class="list-group mb-4">
+      {% for verse in verses %}
+      <div class="list-group-item list-group-item-action">
+        <div class="d-flex w-100 justify-content-between">
+          <h5 class="mb-1">
+            <a
+              href="{{ url_for('read_chapter', book_name=verse.chapter.book.name, chapter_num=verse.chapter.number) }}#verse-{{ verse.number }}"
+            >
+              {{ verse.chapter.book.name }} {{ verse.chapter.number }}:{{
+              verse.number }}
+            </a>
+          </h5>
+          <div>
+            {% if verse.is_command %}<span
+              class="badge rounded-pill bg-warning text-dark"
+              >Command</span
+            >{% endif %} {% if verse.is_hypothetical %}<span
+              class="badge rounded-pill bg-info text-dark"
+              >Hypothetical</span
+            >{% endif %}
+          </div>
+        </div>
+
+        <div class="row">
+          <div class="col-md-6 border-end">
+            <p class="mb-1">{{ verse.text }}</p>
+          </div>
+          <div class="col-md-6 ps-4">
+            {% if verse.text_chr %}
+            <p class="mb-1 text-muted verse-chr">{{ verse.text_chr }}</p>
+            {% else %}
+            <p class="mb-1 text-muted fst-italic opacity-50">
+              <small>Translation unavailable</small>
+            </p>
+            {% endif %}
+          </div>
+        </div>
+
+        {% if verse.lemma_text and use_lemma %}
+        <small class="text-muted">Lemma: {{ verse.lemma_text }}</small>
+        {% endif %}
+      </div>
+      {% endfor %}
+    </div>
+
+    <!-- Pagination -->
+    <nav aria-label="Search results pages">
+      <ul class="pagination justify-content-center">
+        {% if page > 1 %}
+        <li class="page-item">
+          <a
+            class="page-link"
+            href="{{ url_for('search_page', q=query, page=page-1, use_lemma='on' if use_lemma else None, entity=entity, construction=construction, sort=sort) }}"
+            >Previous</a
+          >
+        </li>
+        {% else %}
+        <li class="page-item disabled">
+          <span class="page-link">Previous</span>
+        </li>
+        {% endif %}
+
+        <li class="page-item active" aria-current="page">
+          <span class="page-link">{{ page }}</span>
+        </li>
+
+        {% if verses|length == per_page %}
+        <li class="page-item">
+          <a
+            class="page-link"
+            href="{{ url_for('search_page', q=query, page=page+1, use_lemma='on' if use_lemma else None, entity=entity, construction=construction, sort=sort) }}"
+            >Next</a
+          >
+        </li>
+        {% else %}
+        <li class="page-item disabled">
+          <span class="page-link">Next</span>
+        </li>
+        {% endif %}
+      </ul>
+    </nav>
+
+    {% else %}
+    <div class="alert alert-info">
+      No results found for "{{ query }}"{% if entity %} with entity "{{ entity
+      }}"{% endif %}.
+    </div>
+    {% endif %}
+  </div>
 </div>
 {% endblock %}
