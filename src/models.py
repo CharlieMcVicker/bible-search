@@ -1,0 +1,52 @@
+from peewee import *
+from playhouse.sqlite_ext import FTS5Model, SearchField, RowIDField
+
+# Connect to database
+db = SqliteDatabase('bible.db')
+
+class BaseModel(Model):
+    class Meta:
+        database = db
+
+class Book(BaseModel):
+    name = CharField(unique=True)
+
+class Chapter(BaseModel):
+    book = ForeignKeyField(Book, backref='chapters')
+    number = IntegerField()
+
+    class Meta:
+        # Ensuring (book, number) is unique
+        indexes = (
+            (('book', 'number'), True),
+        )
+
+class Verse(BaseModel):
+    chapter = ForeignKeyField(Chapter, backref='verses')
+    number = IntegerField()
+    text = TextField() # Using KJV as primary for now
+    
+    class Meta:
+        # Ensuring (chapter, number) is unique
+        indexes = (
+            (('chapter', 'number'), True),
+        )
+
+# Full Text Search Index
+class VerseIndex(FTS5Model):
+    rowid = RowIDField()
+    text = SearchField()
+
+    class Meta:
+        database = db
+        # Using the content option to point to the Verse table
+        # This keeps the index small and synchronized
+        options = {'content': Verse}
+
+def init_db():
+    db.connect()
+    db.create_tables([Book, Chapter, Verse, VerseIndex])
+    db.close()
+
+if __name__ == "__main__":
+    init_db()
