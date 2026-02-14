@@ -1,8 +1,8 @@
 from peewee import *
 from playhouse.sqlite_ext import FTS5Model, SearchField, RowIDField
 
-# Connect to database
-db = SqliteDatabase('bible.db')
+# Proxy for late initialization
+db = DatabaseProxy()
 
 class BaseModel(Model):
     class Meta:
@@ -43,7 +43,9 @@ class VerseIndex(FTS5Model):
         # This keeps the index small and synchronized
         options = {'content': Verse}
 
-def init_db():
+def init_db(db_path='bible.db'):
+    database = SqliteDatabase(db_path)
+    db.initialize(database)
     db.connect()
     db.create_tables([Book, Chapter, Verse, VerseIndex])
     db.close()

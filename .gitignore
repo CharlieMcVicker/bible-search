@@ -1,3 +1,9 @@
 node_modules/
 .DS_Store
 *.log
+tools/
+venv/
+bible.db
+__pycache__/
+*.pyc
+.pytest_cache/

@@ -1,0 +1,64 @@
+{% extends "base.html" %}
+
+{% block title %}Search Results - Bible Search{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <h2 class="mb-4">Results for "{{ query }}"</h2>
+        
+        {% if verses %}
+            <p class="text-muted">Found {{ count }} result(s). Showing page {{ page }}.</p>
+            
+            <div class="list-group mb-4">
+                {% for verse in verses %}
+                <div class="list-group-item list-group-item-action">
+                    <div class="d-flex w-100 justify-content-between">
+                        <h5 class="mb-1">
+                            <a href="{{ url_for('read_chapter', book_name=verse.chapter.book.name, chapter_num=verse.chapter.number) }}#verse-{{ verse.number }}">
+                                {{ verse.chapter.book.name }} {{ verse.chapter.number }}:{{ verse.number }}
+                            </a>
+                        </h5>
+                    </div>
+                    <p class="mb-1">{{ verse.text }}</p>
+                </div>
+                {% endfor %}
+            </div>
+
+            <!-- Pagination -->
+            <nav aria-label="Search results pages">
+                <ul class="pagination justify-content-center">
+                    {% if page > 1 %}
+                    <li class="page-item">
+                        <a class="page-link" href="{{ url_for('search_page', q=query, page=page-1) }}">Previous</a>
+                    </li>
+                    {% else %}
+                    <li class="page-item disabled">
+                        <span class="page-link">Previous</span>
+                    </li>
+                    {% endif %}
+
+                    <li class="page-item active" aria-current="page">
+                        <span class="page-link">{{ page }}</span>
+                    </li>
+
+                    {% if verses|length == per_page %}
+                    <li class="page-item">
+                        <a class="page-link" href="{{ url_for('search_page', q=query, page=page+1) }}">Next</a>
+                    </li>
+                    {% else %}
+                    <li class="page-item disabled">
+                        <span class="page-link">Next</span>
+                    </li>
+                    {% endif %}
+                </ul>
+            </nav>
+
+        {% else %}
+            <div class="alert alert-info">
+                No results found for "{{ query }}".
+            </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

@@ -1,5 +1,6 @@
 import os
 import json
+from peewee import SqliteDatabase
 from src.models import db, Book, Chapter, Verse, VerseIndex
 
 DATA_DIR = 'data'
@@ -11,6 +12,8 @@ def ingest_data():
         return
 
     print("Connecting to database...")
+    database = SqliteDatabase('bible.db')
+    db.initialize(database)
     db.connect()
     
     # Drop and recreate tables to ensure clean state

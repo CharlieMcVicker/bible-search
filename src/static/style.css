@@ -1,0 +1,33 @@
+.hover-card:hover {
+    box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+    transition: box-shadow 0.3s ease-in-out;
+    background-color: #f8f9fa;
+}
+
+.chapter-text {
+    line-height: 1.8;
+    font-size: 1.1rem;
+}
+
+.verse-num {
+    font-size: 0.75em;
+    font-weight: bold;
+    color: #6c757d;
+    margin-right: 4px;
+    vertical-align: super;
+    user-select: none;
+}
+
+.verse {
+    display: inline;
+}
+
+/* Optional: Make every 5th verse or so start a new paragraph-ish look? 
+   KJV is often verse-by-verse, but paragraphing is nicer. 
+   For now, simple inline is fine. */
+   
+/* Highlight target verse if linked directly */
+:target {
+    background-color: #fff3cd;
+    transition: background-color 2s ease-out;
+}

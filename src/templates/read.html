@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+
+{% block title %}{{ book.name }} {{ chapter.number }} - Bible Search{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            {% if prev_chapter %}
+            <a href="{{ url_for('read_chapter', book_name=prev_chapter.book_name, chapter_num=prev_chapter.chapter_num) }}" class="btn btn-outline-primary">&larr; Previous</a>
+            {% else %}
+            <button class="btn btn-outline-secondary" disabled>&larr; Previous</button>
+            {% endif %}
+
+            <h2 class="text-center m-0">{{ book.name }} {{ chapter.number }}</h2>
+
+            {% if next_chapter %}
+            <a href="{{ url_for('read_chapter', book_name=next_chapter.book_name, chapter_num=next_chapter.chapter_num) }}" class="btn btn-outline-primary">Next &rarr;</a>
+            {% else %}
+            <button class="btn btn-outline-secondary" disabled>Next &rarr;</button>
+            {% endif %}
+        </div>
+
+        <div class="chapter-text bg-white p-4 shadow-sm rounded">
+            {% for verse in verses %}
+            <span class="verse" id="verse-{{ verse.number }}">
+                <sup class="verse-num text-muted mr-1">{{ verse.number }}</sup>
+                <span class="verse-text">{{ verse.text }}</span>
+            </span>
+            {% endfor %}
+        </div>
+        
+        <div class="d-flex justify-content-between align-items-center mt-4">
+             {% if prev_chapter %}
+            <a href="{{ url_for('read_chapter', book_name=prev_chapter.book_name, chapter_num=prev_chapter.chapter_num) }}" class="btn btn-outline-primary">&larr; Previous</a>
+            {% else %}
+            <button class="btn btn-outline-secondary" disabled>&larr; Previous</button>
+            {% endif %}
+             {% if next_chapter %}
+            <a href="{{ url_for('read_chapter', book_name=next_chapter.book_name, chapter_num=next_chapter.chapter_num) }}" class="btn btn-outline-primary">Next &rarr;</a>
+            {% else %}
+            <button class="btn btn-outline-secondary" disabled>Next &rarr;</button>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
