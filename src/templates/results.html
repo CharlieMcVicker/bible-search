@@ -61,7 +61,20 @@
                             {% if verse.is_hypothetical %}<span class="badge rounded-pill bg-info text-dark">Hypothetical</span>{% endif %}
                         </div>
                     </div>
-                    <p class="mb-1">{{ verse.text }}</p>
+                    
+                    <div class="row">
+                        <div class="col-md-6 border-end">
+                            <p class="mb-1">{{ verse.text }}</p>
+                        </div>
+                        <div class="col-md-6 ps-4">
+                            {% if verse.text_chr %}
+                            <p class="mb-1 text-muted verse-chr">{{ verse.text_chr }}</p>
+                            {% else %}
+                            <p class="mb-1 text-muted fst-italic opacity-50"><small>Translation unavailable</small></p>
+                            {% endif %}
+                        </div>
+                    </div>
+
                     {% if verse.lemma_text and use_lemma %}
                     <small class="text-muted">Lemma: {{ verse.lemma_text }}</small>
                     {% endif %}
