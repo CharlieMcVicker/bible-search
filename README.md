@@ -1,46 +1,90 @@
 # Bible Search & Scraper
 
-This project is a tool for scraping Bible texts and providing a foundation for a search interface. It is built using Node.js.
+A comprehensive tool for searching and reading the Bible. This project includes a Node.js scraper for data acquisition and a Python/Flask web application for browsing and full-text search.
 
-## Project Structure
+## Features
 
-- **`scraper/`**: Contains the logic for scraping Bible texts.
-  - `scrape_bible.js`: The main script to scrape data.
-  - `test_scrape.js`: Tests for the scraping functionality.
-- **`data/`**: Stores the scraped Bible text.
-  - Organized by Book -> Chapter (JSON files).
+- **Full-Text Search**: Fast search capability using SQLite FTS5.
+- **Smart Reference Parsing**: Supports queries like "John 3:16", "Gen 1:1-5", and abbreviations.
+- **Reading Mode**: Distraction-free chapter reading with navigation.
+- **API**: RESTful API for developers.
 
 ## Getting Started
 
 ### Prerequisites
 
-- Node.js installed on your machine.
+- **Python 3.8+**
+- **Node.js** (Only required if you want to run the scraper manually)
 
 ### Installation
 
-1. Install dependencies:
-   ```bash
-   npm install
-   ```
+1.  **Clone the repository:**
+    ```bash
+    git clone <repository_url>
+    cd bible-search
+    ```
 
-### Usage
+2.  **Set up Python Environment:**
+    ```bash
+    python3 -m venv venv
+    source venv/bin/activate  # On Windows use `venv\Scripts\activate`
+    pip install -r requirements.txt
+    ```
 
-**Run the Scraper:**
+### Database Setup
 
-To scrape the Bible data (if not already present or to update it):
+Before running the application, you need to ingest the data into the SQLite database.
+
+1.  **Ingest Data:**
+    This script reads the JSON data from the `data/` directory and populates `bible.db`.
+    ```bash
+    python -m src.ingest
+    ```
+
+### Running the Application
+
+1.  **Start the Server:**
+    ```bash
+    python -m src.app
+    ```
+
+2.  **Access the App:**
+    Open your browser and navigate to `http://127.0.0.1:5000`.
+
+### Running Tests
+
+To verify the installation and code integrity:
 
 ```bash
-npm run scrape
+pytest
 ```
 
-**Run Tests:**
+---
 
-To verify the scraping logic:
+## Data Acquisition (Optional)
 
-```bash
-npm test
-```
+If you need to re-scrape the raw JSON data:
 
-## Data Format
+1.  **Install Node dependencies:**
+    ```bash
+    npm install
+    ```
 
-The data is stored in the `data/` directory. Each book of the Bible has its own folder, and within that folder, each chapter is a separate JSON file (e.g., `data/Genesis/1.json`).
+2.  **Run the Scraper:**
+    ```bash
+    npm run scrape
+    ```
+
+## Project Structure
+
+- **`src/`**: Python application source code.
+  - `app.py`: Flask application entry point.
+  - `models.py`: Database models (Peewee).
+  - `search.py`: Search logic and reference parsing.
+  - `ingest.py`: Data ingestion script.
+  - `nlp.py`: Natural Language Processing utilties.
+  - `templates/`: HTML templates.
+  - `static/`: CSS and JavaScript files.
+- **`scraper/`**: Node.js scripts for scraping Bible texts.
+- **`data/`**: JSON data storage (Book -> Chapter).
+- **`tests/`**: Unit and integration tests.
