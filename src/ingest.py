@@ -1,7 +1,8 @@
 import os
 import json
+import spacy
 from peewee import SqliteDatabase
-from src.models import db, Book, Chapter, Verse, VerseIndex
+from src.models import db, Book, Chapter, Verse, VerseIndex, Entity, VerseEntity
 
 DATA_DIR = 'data'
 FULL_DATA_FILE = os.path.join(DATA_DIR, 'kjv_full.json')
@@ -11,6 +12,16 @@ def ingest_data():
         print(f"Data directory '{DATA_DIR}' not found.")
         return
 
+    print("Loading spaCy model...")
+    # Disable parser and textcat for speed, we need tagger (for lemma) and ner
+    try:
+        nlp = spacy.load("en_core_web_sm", disable=["parser", "textcat"])
+    except OSError:
+        print("Downloading spaCy model...")
+        from spacy.cli import download
+        download("en_core_web_sm")
+        nlp = spacy.load("en_core_web_sm", disable=["parser", "textcat"])
+
     print("Connecting to database...")
     database = SqliteDatabase('bible.db')
     db.initialize(database)
@@ -18,11 +29,45 @@ def ingest_data():
     
     # Drop and recreate tables to ensure clean state
     print("Dropping and recreating tables...")
-    db.drop_tables([Book, Chapter, Verse, VerseIndex], safe=True)
-    db.create_tables([Book, Chapter, Verse, VerseIndex])
+    db.drop_tables([Book, Chapter, Verse, VerseIndex, Entity, VerseEntity], safe=True)
+    db.create_tables([Book, Chapter, Verse, VerseIndex, Entity, VerseEntity])
     
     total_verses = 0
-    
+    entity_cache = {} # (name, label) -> entity_instance
+
+    def process_verse(chapter, verse_num, text):
+        doc = nlp(text)
+        
+        # Lemma text
+        lemma_text = " ".join([token.lemma_ for token in doc])
+        
+        verse = Verse.create(
+            chapter=chapter, 
+            number=verse_num, 
+            text=text,
+            lemma_text=lemma_text
+        )
+        
+        # Entities
+        seen_entities = set()
+        for ent in doc.ents:
+            # Filter interested labels
+            if ent.label_ in ["PERSON", "GPE", "LOC", "ORG", "NORP"]:
+                key = (ent.text, ent.label_)
+                
+                # Check if we already linked this entity for this verse
+                if key in seen_entities:
+                    continue
+                seen_entities.add(key)
+                
+                if key not in entity_cache:
+                    entity, created = Entity.get_or_create(name=ent.text, label=ent.label_)
+                    entity_cache[key] = entity
+                
+                VerseEntity.create(verse=verse, entity=entity_cache[key])
+                
+        return 1
+
     # Check for full JSON file first
     if os.path.exists(FULL_DATA_FILE):
         print(f"Found full data file: {FULL_DATA_FILE}")
@@ -41,9 +86,8 @@ def ingest_data():
                     chapter = Chapter.create(book=book, number=chapter_num)
                     
                     for j, verse_text in enumerate(verses):
-                        verse_num = j + 1
-                        Verse.create(chapter=chapter, number=verse_num, text=verse_text)
-                        total_verses += 1
+                        total_verses += process_verse(chapter, j + 1, verse_text)
+                        
     else:
         print("Full data file not found. Falling back to directory structure...")
         
@@ -86,8 +130,7 @@ def ingest_data():
                             if not text:
                                 text = item.get('web', '') # Fallback
                             
-                            Verse.create(chapter=chapter, number=verse_num, text=text)
-                            total_verses += 1
+                            total_verses += process_verse(chapter, verse_num, text)
 
     # Rebuild the FTS index
     print("Rebuilding FTS index...")

@@ -81,11 +81,13 @@ def search_verses():
     try:
         limit = int(request.args.get('limit', 10))
         offset = int(request.args.get('offset', 0))
+        use_lemma = request.args.get('use_lemma', 'false').lower() == 'true'
+        entity = request.args.get('entity')
     except ValueError:
         abort(400, description="Invalid limit or offset")
         
     start_time = time.time()
-    results = searcher.search(query, limit=limit, offset=offset)
+    results = searcher.search(query, limit=limit, offset=offset, use_lemma=use_lemma, entity_filter=entity)
     duration = time.time() - start_time
     
     return jsonify({
@@ -93,7 +95,8 @@ def search_verses():
             'book': r.chapter.book.name,
             'chapter': r.chapter.number,
             'verse': r.number,
-            'text': r.text
+            'text': r.text,
+            'lemma': r.lemma_text
         } for r in results],
         'meta': {
             'count': len(results), # This is page count
@@ -167,44 +170,43 @@ def search_page():
         return redirect(url_for('index'))
         
     page = request.args.get('page', 1, type=int)
+    use_lemma = request.args.get('use_lemma', 'off') == 'on' # Checkbox sends 'on'
+    entity = request.args.get('entity', '').strip()
+    if not entity:
+        entity = None
+        
     per_page = 20
     offset = (page - 1) * per_page
     
-    # Use parse_and_search if it's page 1, but parse_and_search doesn't support pagination elegantly yet
-    # because it returns a list, not a query builder.
-    # For simplicity, if it looks like a reference, we just redirect to the read view!
-    # That's a better UX.
+    # Check if it's a reference (only if not doing advanced search)
+    # If user checked 'use_lemma', they probably want text search even if it looks like a ref?
+    # Probably safe to skip ref check if use_lemma is on.
     
-    # Check if it's a reference
-    refs = searcher.parse_and_search(query)
-    # But parse_and_search returns verses.
-    # We want to check if it WAS a reference parsing.
-    # Let's import extract_bible_references
-    from src.nlp import extract_bible_references
-    ref_meta = extract_bible_references(query)
-    
-    if ref_meta and page == 1:
-        # Redirect to the first reference found
-        r = ref_meta[0]
-        # If verse is specified, we can add anchor
-        target_url = url_for('read_chapter', book_name=r['book'], chapter_num=r['chapter'])
-        if r['verse_start']:
-             target_url += f"#verse-{r['verse_start']}"
-        return redirect(target_url)
+    if not use_lemma and not entity and page == 1:
+        from src.nlp import extract_bible_references
+        ref_meta = extract_bible_references(query)
+        
+        if ref_meta:
+            # Redirect to the first reference found
+            r = ref_meta[0]
+            target_url = url_for('read_chapter', book_name=r['book'], chapter_num=r['chapter'])
+            if r['verse_start']:
+                 target_url += f"#verse-{r['verse_start']}"
+            return redirect(target_url)
 
     # Otherwise text search
     start_time = time.time()
-    results = searcher.search(query, limit=per_page, offset=offset)
+    results = searcher.search(query, limit=per_page, offset=offset, use_lemma=use_lemma, entity_filter=entity)
     duration = time.time() - start_time
     
     return render_template('results.html', 
                            query=query, 
                            verses=results, 
-                           count=len(results), # This is just page count. 
-                           # FTS5 doesn't give total count easily without running count query.
-                           # We'll just show "Found results..." 
+                           count=len(results), 
                            page=page,
-                           per_page=per_page)
+                           per_page=per_page,
+                           use_lemma=use_lemma,
+                           entity=entity)
 
 if __name__ == "__main__":
-    app.run(debug=True)
+    app.run(host='0.0.0.0', port=5000, debug=True)

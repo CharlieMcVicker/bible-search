@@ -1,13 +1,26 @@
+import spacy
 from peewee import fn
-from src.models import db, Book, Chapter, Verse, VerseIndex
+from src.models import db, Book, Chapter, Verse, VerseIndex, Entity, VerseEntity
 from src.nlp import extract_bible_references
 
 class BibleSearch:
     def __init__(self, db_path='bible.db'):
         self.db = db
+        self.nlp = None
         # Ensure connection is open if not already (Peewee handles this well usually)
         if self.db.is_closed():
             self.db.connect()
+
+    def _get_nlp(self):
+        if self.nlp is None:
+            # Load small model for lemmatization
+            try:
+                self.nlp = spacy.load("en_core_web_sm", disable=["parser", "textcat", "ner"])
+            except OSError:
+                from spacy.cli import download
+                download("en_core_web_sm")
+                self.nlp = spacy.load("en_core_web_sm", disable=["parser", "textcat", "ner"])
+        return self.nlp
 
     def get_verse(self, book_name, chapter_num, verse_num):
         """
@@ -27,22 +40,50 @@ class BibleSearch:
         except Verse.DoesNotExist:
             return None
 
-    def search(self, query, limit=10, offset=0):
+    def search(self, query, limit=10, offset=0, use_lemma=False, entity_filter=None):
         """
-        Performs a full-text search on verses using BM25 ranking (default in FTS5).
+        Performs a full-text search on verses using BM25 ranking.
+        
+        :param use_lemma: If True, lemmatizes the query before searching.
+        :param entity_filter: Optional string (Entity Name) to filter results.
         """
-        # FTS5 match query
-        # We can use the simple 'MATCH' operator.
-        # Peewee's FTS5 support: VerseIndex.search(query) usually works if defined, 
-        # but here we might need to use the match operator directly.
         
-        # Using raw query or peewee's expression for flexibility
-        # VerseIndex.match(query) is the standard way.
-        
-        results = (Verse
-                   .select(Verse, VerseIndex.rank().alias('score'))
-                   .join(VerseIndex, on=(Verse.id == VerseIndex.rowid))
-                   .where(VerseIndex.match(query))
+        search_query = query
+        if use_lemma:
+            nlp = self._get_nlp()
+            doc = nlp(query)
+            # Join lemmas
+            search_query = " ".join([token.lemma_ for token in doc])
+            
+            # If we are using lemmas, we should ideally target the lemma_text column
+            # to avoid noise, OR we just trust that matching "love" against "loved" (in text) 
+            # might not happen but matching "love" in lemma_text will.
+            # To be precise, let's target lemma_text column if use_lemma is set.
+            # FTS5 syntax: column : query
+            search_query = f"lemma_text: {search_query}"
+        else:
+            # Restrict to text column to avoid matching against lemma_text
+            # Use column filter syntax provided by FTS5 if possible, or Peewee's field match
+            # But simple query string injection "text: ..." is risky if query has operators.
+            # Ideally we use VerseIndex.text.match(query) but Peewee FTS5Model usually uses the model match.
+            # Let's try to wrap it:
+            search_query = f"text: {search_query}"
+
+        # Base query
+        # We start with selecting Verse and Score
+        q = (Verse
+             .select(Verse, VerseIndex.rank().alias('score'))
+             .join(VerseIndex, on=(Verse.id == VerseIndex.rowid))
+             .where(VerseIndex.match(search_query)))
+
+        # Apply Entity Filter
+        if entity_filter:
+            q = (q
+                 .join(VerseEntity, on=(VerseEntity.verse == Verse.id))
+                 .join(Entity, on=(VerseEntity.entity == Entity.id))
+                 .where(Entity.name == entity_filter))
+
+        results = (q
                    .order_by(VerseIndex.rank())
                    .limit(limit)
                    .offset(offset))

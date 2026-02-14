@@ -5,10 +5,31 @@
 {% block content %}
 <div class="row">
     <div class="col-12">
-        <h2 class="mb-4">Results for "{{ query }}"</h2>
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h2 class="mb-0">Results for "{{ query }}"</h2>
+            <!-- Refinement Form -->
+            <form action="{{ url_for('search_page') }}" method="GET" class="d-flex align-items-center gap-2">
+                <input type="hidden" name="q" value="{{ query }}">
+                
+                <div class="form-check form-switch mb-0">
+                    <input class="form-check-input" type="checkbox" id="useLemmaRefine" name="use_lemma" {% if use_lemma %}checked{% endif %} onchange="this.form.submit()">
+                    <label class="form-check-label text-nowrap" for="useLemmaRefine">Word Roots</label>
+                </div>
+                
+                <div class="input-group input-group-sm">
+                     <span class="input-group-text">Entity</span>
+                     <input type="text" class="form-control" name="entity" value="{{ entity or '' }}" placeholder="Filter..." style="max-width: 120px;">
+                     <button class="btn btn-outline-secondary" type="submit">Go</button>
+                </div>
+            </form>
+        </div>
         
         {% if verses %}
-            <p class="text-muted">Found {{ count }} result(s). Showing page {{ page }}.</p>
+            <p class="text-muted">
+                Found {{ count }} result(s) on page {{ page }}.
+                {% if use_lemma %}<span class="badge bg-info text-dark">Lemma Search</span>{% endif %}
+                {% if entity %}<span class="badge bg-secondary">Entity: {{ entity }}</span>{% endif %}
+            </p>
             
             <div class="list-group mb-4">
                 {% for verse in verses %}
@@ -21,6 +42,9 @@
                         </h5>
                     </div>
                     <p class="mb-1">{{ verse.text }}</p>
+                    {% if verse.lemma_text and use_lemma %}
+                    <small class="text-muted">Lemma: {{ verse.lemma_text }}</small>
+                    {% endif %}
                 </div>
                 {% endfor %}
             </div>
@@ -30,7 +54,7 @@
                 <ul class="pagination justify-content-center">
                     {% if page > 1 %}
                     <li class="page-item">
-                        <a class="page-link" href="{{ url_for('search_page', q=query, page=page-1) }}">Previous</a>
+                        <a class="page-link" href="{{ url_for('search_page', q=query, page=page-1, use_lemma='on' if use_lemma else None, entity=entity) }}">Previous</a>
                     </li>
                     {% else %}
                     <li class="page-item disabled">
@@ -44,7 +68,7 @@
 
                     {% if verses|length == per_page %}
                     <li class="page-item">
-                        <a class="page-link" href="{{ url_for('search_page', q=query, page=page+1) }}">Next</a>
+                        <a class="page-link" href="{{ url_for('search_page', q=query, page=page+1, use_lemma='on' if use_lemma else None, entity=entity) }}">Next</a>
                     </li>
                     {% else %}
                     <li class="page-item disabled">
@@ -56,7 +80,7 @@
 
         {% else %}
             <div class="alert alert-info">
-                No results found for "{{ query }}".
+                No results found for "{{ query }}"{% if entity %} with entity "{{ entity }}"{% endif %}.
             </div>
         {% endif %}
     </div>
