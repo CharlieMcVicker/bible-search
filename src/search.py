@@ -109,9 +109,9 @@ class BibleSearch:
 
         # Apply Sorting
         if sort == "length_asc":
-            q = q.order_by(fn.length(Verse.text))
+            q = q.order_by(fn.length(Verse.text_chr))
         elif sort == "length_desc":
-            q = q.order_by(fn.length(Verse.text).desc())
+            q = q.order_by(fn.length(Verse.text_chr).desc())
         else:
             # Default to relevance (BM25 rank)
             q = q.order_by(VerseIndex.rank())
