@@ -9,25 +9,39 @@
     font-size: 1.1rem;
 }
 
+.verse-row {
+    padding: 10px 0;
+    border-bottom: 1px solid #f1f1f1;
+}
+
+.verse-row:last-child {
+    border-bottom: none;
+}
+
 .verse-num {
     font-size: 0.75em;
     font-weight: bold;
     color: #6c757d;
-    margin-right: 4px;
-    vertical-align: super;
+    margin-right: 8px;
     user-select: none;
 }
 
-.verse {
-    display: inline;
+.verse-chr {
+    font-family: serif;
+    font-size: 1.1rem;
 }
 
-/* Optional: Make every 5th verse or so start a new paragraph-ish look? 
-   KJV is often verse-by-verse, but paragraphing is nicer. 
-   For now, simple inline is fine. */
-   
+@media (max-width: 768px) {
+    .col-md-6.border-end {
+        border-end: none !important;
+        border-bottom: 1px solid #eee;
+        padding-bottom: 10px;
+        margin-bottom: 10px;
+    }
+}
+
 /* Highlight target verse if linked directly */
-:target {
+.verse-row:target {
     background-color: #fff3cd;
     transition: background-color 2s ease-out;
 }

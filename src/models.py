@@ -25,6 +25,7 @@ class Verse(BaseModel):
     chapter = ForeignKeyField(Chapter, backref='verses')
     number = IntegerField()
     text = TextField() # Using KJV as primary for now
+    text_chr = TextField(null=True) # Cherokee translation
     lemma_text = TextField(null=True) # Lemmatized version of text
     is_command = BooleanField(default=False)
     is_hypothetical = BooleanField(default=False)
@@ -65,11 +66,17 @@ class VerseEntity(BaseModel):
             (('verse', 'entity'), True),
         )
 
+class VerbStat(BaseModel):
+    form = CharField(unique=True)
+    subclause_count = IntegerField(default=0)
+    matrix_count = IntegerField(default=0)
+    total_count = IntegerField(default=0)
+
 def init_db(db_path='bible.db'):
     database = SqliteDatabase(db_path)
     db.initialize(database)
     db.connect()
-    db.create_tables([Book, Chapter, Verse, VerseIndex, Entity, VerseEntity])
+    db.create_tables([Book, Chapter, Verse, VerseIndex, Entity, VerseEntity, VerbStat])
     db.close()
 
 if __name__ == "__main__":

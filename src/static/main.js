@@ -6,8 +6,8 @@ document.addEventListener('DOMContentLoaded', () => {
         num.title = 'Click to copy verse link';
         
         num.addEventListener('click', (e) => {
-            const verseSpan = e.target.parentElement;
-            const verseId = verseSpan.id;
+            const verseRow = e.target.closest('.verse-row');
+            const verseId = verseRow.id;
             const url = window.location.href.split('#')[0] + '#' + verseId;
             
             navigator.clipboard.writeText(url).then(() => {

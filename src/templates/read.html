@@ -23,10 +23,21 @@
 
         <div class="chapter-text bg-white p-4 shadow-sm rounded">
             {% for verse in verses %}
-            <span class="verse" id="verse-{{ verse.number }}">
-                <sup class="verse-num text-muted mr-1">{{ verse.number }}</sup>
-                <span class="verse-text">{{ verse.text }}</span>
-            </span>
+            <div class="verse-row mb-3" id="verse-{{ verse.number }}">
+                <div class="row">
+                    <div class="col-md-6 border-end">
+                        <sup class="verse-num text-muted">{{ verse.number }}</sup>
+                        <span class="verse-text">{{ verse.text }}</span>
+                    </div>
+                    <div class="col-md-6 ps-4 text-muted">
+                        {% if verse.text_chr %}
+                        <span class="verse-chr">{{ verse.text_chr }}</span>
+                        {% else %}
+                        <small class="fst-italic opacity-50">Translation unavailable</small>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
             {% endfor %}
         </div>
         

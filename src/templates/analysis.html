@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+
+{% block title %}Grammatical Insights - Bible Search{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <h1 class="mb-4">Hypothetical Construction Analysis</h1>
+        <p class="lead">Distribution of verb forms in hypothetical subclauses (e.g., the "if" part) vs. matrix clauses.</p>
+        
+        <div class="card shadow-sm mb-5">
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Verb Form</th>
+                                <th class="text-center">Subclause Count</th>
+                                <th class="text-center">Matrix Clause Count</th>
+                                <th class="text-center">Total</th>
+                                <th class="text-center">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for stat in stats %}
+                            <tr>
+                                <td class="fw-bold">{{ stat.form }}</td>
+                                <td class="text-center">{{ stat.subclause_count }}</td>
+                                <td class="text-center">{{ stat.matrix_count }}</td>
+                                <td class="text-center">{{ stat.total_count }}</td>
+                                <td class="text-center">
+                                    <a href="{{ url_for('search_page', q=stat.form, construction='hypothetical') }}" class="btn btn-sm btn-outline-primary">
+                                        View Verses
+                                    </a>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

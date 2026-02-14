@@ -1,6 +1,6 @@
 from flask import Flask, jsonify, request, abort, render_template, redirect, url_for
 from peewee import SqliteDatabase, fn
-from src.models import db, Book, Chapter, Verse, Entity, VerseEntity
+from src.models import db, Book, Chapter, Verse, Entity, VerseEntity, VerbStat
 from src.search import BibleSearch
 import time
 import math
@@ -230,6 +230,12 @@ def search_page():
                            entity=entity,
                            construction=construction,
                            top_entities=top_entities)
+
+@app.route('/analysis')
+def analysis_page():
+    # Get all verb stats, sorted by total occurrences
+    stats = VerbStat.select().order_by(VerbStat.total_count.desc()).limit(100)
+    return render_template('analysis.html', stats=stats)
 
 if __name__ == "__main__":
     app.run(host='0.0.0.0', port=5000, debug=False)

@@ -27,9 +27,18 @@ class TestBibleFrontend(unittest.TestCase):
     def populate_data(self):
         john = Book.create(name="John")
         ch3 = Chapter.create(book=john, number=3)
-        Verse.create(chapter=ch3, number=16, text="For God so loved the world...")
+        Verse.create(chapter=ch3, number=16, 
+                     text="For God so loved the world...",
+                     text_chr="ᎠᏎᏰᏃ ᎤᏁᎳᏅᎯ ᎤᎨᏳᏒᎩ ᎡᎶᎯ...")
         
         VerseIndex.rebuild()
+
+    def test_read_chapter_parallel(self):
+        response = self.client.get('/read/John/3')
+        self.assertEqual(response.status_code, 200)
+        self.assertIn(b"For God so loved the world", response.data)
+        # Check for Cherokee text
+        self.assertIn("ᎠᏎᏰᏃ".encode('utf-8'), response.data)
 
     def test_index(self):
         response = self.client.get('/')
