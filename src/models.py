@@ -73,11 +73,45 @@ class VerbStat(BaseModel):
     total_count = IntegerField(default=0)
 
 
+class Sentence(BaseModel):
+    ref_id = CharField(unique=True)
+    english = TextField()
+    syllabary = TextField()
+    phonetic = TextField()
+    audio = CharField(null=True)
+    lemma_text = TextField(null=True)
+    is_command = BooleanField(default=False)
+    is_hypothetical = BooleanField(default=False)
+
+
+class SentenceIndex(FTS5Model):
+    rowid = RowIDField()
+    english = SearchField()
+    lemma_text = SearchField()
+    syllabary = SearchField()
+
+    class Meta:
+        database = db
+        options = {"content": Sentence}
+
+
 def init_db(db_path="bible.db"):
     database = SqliteDatabase(db_path)
     db.initialize(database)
     db.connect()
-    db.create_tables([Book, Chapter, Verse, VerseIndex, Entity, VerseEntity, VerbStat])
+    db.create_tables(
+        [
+            Book,
+            Chapter,
+            Verse,
+            VerseIndex,
+            Entity,
+            VerseEntity,
+            VerbStat,
+            Sentence,
+            SentenceIndex,
+        ]
+    )
     db.close()
 
 

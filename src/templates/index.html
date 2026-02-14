@@ -1,64 +1,60 @@
-{% extends "base.html" %}
-
-{% block title %}Home - Bible Search{% endblock %}
-
+{% extends "base.html" %} {% block title %}Home - Cherokee Search{% endblock %}
 {% block content %}
 <div class="row justify-content-center">
-    <div class="col-md-8 text-center">
-        <h1 class="display-4 mb-4">Bible Search</h1>
-        <p class="lead mb-5">Search verses or browse books.</p>
-        
-        <form action="{{ url_for('search_page') }}" method="GET" class="mb-5">
-            <div class="input-group input-group-lg mb-3">
-                <input type="text" class="form-control" name="q" placeholder="e.g. John 3:16 or 'love'" required>
-                <button class="btn btn-primary" type="submit">Search</button>
-            </div>
-            
-            <div class="d-flex justify-content-center gap-3">
-                <div class="form-check form-switch">
-                    <input class="form-check-input" type="checkbox" id="useLemma" name="use_lemma">
-                    <label class="form-check-label" for="useLemma">Match Word Roots (e.g., "love" matches "loved")</label>
-                </div>
-                <!-- Entity filter with suggestions -->
-                <div class="input-group input-group-sm" style="max-width: 250px;">
-                    <span class="input-group-text">Entity Filter</span>
-                    <input type="text" class="form-control" name="entity" placeholder="e.g. Peter" list="entity-list">
-                    <datalist id="entity-list">
-                        {% for ent in top_entities %}
-                        <option value="{{ ent.name }}">
-                        {% endfor %}
-                    </datalist>
-                </div>
+  <div class="col-md-8 text-center">
+    <h1 class="display-4 mb-4">Cherokee Sentence Search</h1>
+    <p class="lead mb-5">Search widely across the corpus.</p>
 
-                <div class="input-group input-group-sm" style="max-width: 250px;">
-                    <span class="input-group-text">Construction</span>
-                    <select class="form-select" name="construction">
-                        <option value="">All</option>
-                        <option value="command">Commands</option>
-                        <option value="hypothetical">Hypotheticals</option>
-                    </select>
-                </div>
-            </div>
-        </form>
-    </div>
-</div>
+    <form action="{{ url_for('search_page') }}" method="GET" class="mb-5">
+      <div class="input-group input-group-lg mb-3">
+        <input
+          type="text"
+          class="form-control"
+          name="q"
+          placeholder="e.g. 'playing ball' or 'ᎠᏂᏧᏣ'"
+          required
+        />
+        <button class="btn btn-primary" type="submit">Search</button>
+      </div>
 
-<div class="row">
-    <div class="col-12">
-        <h2 class="mb-3">Books of the Bible</h2>
-        <div class="row row-cols-2 row-cols-md-4 row-cols-lg-6 g-3">
-            {% for book in books %}
-            <div class="col">
-                <a href="{{ url_for('read_chapter', book_name=book.name, chapter_num=1) }}" class="text-decoration-none">
-                    <div class="card h-100 hover-card">
-                        <div class="card-body text-center d-flex align-items-center justify-content-center">
-                            <h6 class="card-title mb-0">{{ book.name }}</h6>
-                        </div>
-                    </div>
-                </a>
-            </div>
-            {% endfor %}
+      <div class="d-flex justify-content-center gap-4">
+        <div class="form-check form-switch">
+          <input
+            class="form-check-input"
+            type="checkbox"
+            id="useLemma"
+            name="use_lemma"
+          />
+          <label class="form-check-label text-nowrap" for="useLemma"
+            >Word Roots</label
+          >
         </div>
-    </div>
+
+        <div class="form-check form-switch">
+          <input
+            class="form-check-input"
+            type="checkbox"
+            id="isHypothetical"
+            name="is_hypothetical"
+          />
+          <label class="form-check-label text-nowrap" for="isHypothetical"
+            >Hypothetical</label
+          >
+        </div>
+
+        <div class="form-check form-switch">
+          <input
+            class="form-check-input"
+            type="checkbox"
+            id="isCommand"
+            name="is_command"
+          />
+          <label class="form-check-label text-nowrap" for="isCommand"
+            >Imperative</label
+          >
+        </div>
+      </div>
+    </form>
+  </div>
 </div>
 {% endblock %}

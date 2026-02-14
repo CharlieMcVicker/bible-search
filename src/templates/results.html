@@ -1,5 +1,6 @@
-{% extends "base.html" %} {% block title %}Search Results - Bible Search{%
-endblock %} {% block content %}
+{% extends "base.html" %}
+{% block title %}Search Results - Cherokee Search{% endblock %}
+{% block content %}
 <div class="row">
   <div class="col-12">
     <div class="d-flex justify-content-between align-items-center mb-4">
@@ -18,47 +19,40 @@ endblock %} {% block content %}
             type="checkbox"
             id="useLemmaRefine"
             name="use_lemma"
-            {%
-            if
-            use_lemma
-            %}checked{%
-            endif
-            %}
+            {% if use_lemma %}checked{% endif %}
             onchange="this.form.submit()"
           />
           <label class="form-check-label text-nowrap" for="useLemmaRefine"
-            >Word Roots</label
+            >Roots</label
           >
         </div>
 
-        <div class="input-group input-group-sm">
-          <span class="input-group-text">Entity</span>
+        <div class="form-check form-switch mb-0">
           <input
-            type="text"
-            class="form-control"
-            name="entity"
-            value="{{ entity or '' }}"
-            placeholder="Filter..."
-            list="entity-list-refine"
-            style="max-width: 120px"
+            class="form-check-input"
+            type="checkbox"
+            id="isHypotheticalRefine"
+            name="is_hypothetical"
+            {% if is_hypothetical %}checked{% endif %}
+            onchange="this.form.submit()"
           />
-          <datalist id="entity-list-refine">
-            {% for ent in top_entities %}
-            <option value="{{ ent.name }}">{% endfor %}</option>
-          </datalist>
+          <label class="form-check-label text-nowrap" for="isHypotheticalRefine"
+            >Hypothetical</label
+          >
         </div>
 
-        <div class="input-group input-group-sm">
-          <span class="input-group-text">Type</span>
-          <select
-            class="form-select"
-            name="construction"
+        <div class="form-check form-switch mb-0">
+          <input
+            class="form-check-input"
+            type="checkbox"
+            id="isCommandRefine"
+            name="is_command"
+            {% if is_command %}checked{% endif %}
             onchange="this.form.submit()"
+          />
+          <label class="form-check-label text-nowrap" for="isCommandRefine"
+            >Imperative</label
           >
-            <option value="">All</option>
-            <option value="command" {{ 'selected' if construction == 'command' else '' }}>Commands</option>
-            <option value="hypothetical" {{ 'selected' if construction == 'hypothetical' else '' }}>Hypotheticals</option>
-          </select>
         </div>
 
         <div class="input-group input-group-sm">
@@ -76,62 +70,38 @@ endblock %} {% block content %}
       </form>
     </div>
 
-    {% if verses %}
+    {% if sentences %}
     <p class="text-muted">
-      Found {{ count }} result(s) on page {{ page }}. {% if use_lemma %}<span
-        class="badge bg-info text-dark"
-        >Lemma Search</span
-      >{% endif %} {% if entity %}<span class="badge bg-secondary"
-        >Entity: {{ entity }}</span
-      >{% endif %} {% if construction %}<span class="badge bg-warning text-dark"
-        >{{ construction|capitalize }}</span
-      >{% endif %} {% if sort == 'length_asc' %}<span class="badge bg-primary"
-        >Shortest First</span
-      >{% endif %} {% if sort == 'length_desc' %}<span class="badge bg-primary"
-        >Longest First</span
-      >{% endif %}
+      Found {{ count }} result(s) on page {{ page }}.
+      {% if use_lemma %}<span class="badge bg-info text-dark">Lemma Search</span>{% endif %}
     </p>
 
     <div class="list-group mb-4">
-      {% for verse in verses %}
+      {% for sentence in sentences %}
       <div class="list-group-item list-group-item-action">
         <div class="d-flex w-100 justify-content-between">
           <h5 class="mb-1">
-            <a
-              href="{{ url_for('read_chapter', book_name=verse.chapter.book.name, chapter_num=verse.chapter.number) }}#verse-{{ verse.number }}"
-            >
-              {{ verse.chapter.book.name }} {{ verse.chapter.number }}:{{
-              verse.number }}
-            </a>
+            {{ sentence.syllabary }}
           </h5>
-          <div>
-            {% if verse.is_command %}<span
-              class="badge rounded-pill bg-warning text-dark"
-              >Command</span
-            >{% endif %} {% if verse.is_hypothetical %}<span
-              class="badge rounded-pill bg-info text-dark"
-              >Hypothetical</span
-            >{% endif %}
-          </div>
+          <small class="text-muted">{{ sentence.ref_id }}</small>
         </div>
 
         <div class="row">
           <div class="col-md-6 border-end">
-            <p class="mb-1">{{ verse.text }}</p>
+             <p class="mb-1 fw-bold">{{ sentence.phonetic }}</p>
+             <p class="mb-1">{{ sentence.english }}</p>
           </div>
-          <div class="col-md-6 ps-4">
-            {% if verse.text_chr %}
-            <p class="mb-1 text-muted verse-chr">{{ verse.text_chr }}</p>
+          <div class="col-md-6 ps-4 d-flex align-items-center">
+            {% if sentence.audio %}
+            <audio controls src="{{ url_for('static', filename='audio/' + sentence.audio) }}"></audio>
             {% else %}
-            <p class="mb-1 text-muted fst-italic opacity-50">
-              <small>Translation unavailable</small>
-            </p>
+            <span class="text-muted fst-italic">No audio</span>
             {% endif %}
           </div>
         </div>
 
-        {% if verse.lemma_text and use_lemma %}
-        <small class="text-muted">Lemma: {{ verse.lemma_text }}</small>
+        {% if sentence.lemma_text and use_lemma %}
+        <small class="text-muted">Lemma: {{ sentence.lemma_text }}</small>
         {% endif %}
       </div>
       {% endfor %}
@@ -144,7 +114,7 @@ endblock %} {% block content %}
         <li class="page-item">
           <a
             class="page-link"
-            href="{{ url_for('search_page', q=query, page=page-1, use_lemma='on' if use_lemma else None, entity=entity, construction=construction, sort=sort) }}"
+            href="{{ url_for('search_page', q=query, page=page-1, use_lemma='on' if use_lemma else None, sort=sort, is_hypothetical='on' if is_hypothetical else None, is_command='on' if is_command else None) }}"
             >Previous</a
           >
         </li>
@@ -158,11 +128,11 @@ endblock %} {% block content %}
           <span class="page-link">{{ page }}</span>
         </li>
 
-        {% if verses|length == per_page %}
+        {% if sentences|length == per_page %}
         <li class="page-item">
           <a
             class="page-link"
-            href="{{ url_for('search_page', q=query, page=page+1, use_lemma='on' if use_lemma else None, entity=entity, construction=construction, sort=sort) }}"
+            href="{{ url_for('search_page', q=query, page=page+1, use_lemma='on' if use_lemma else None, sort=sort, is_hypothetical='on' if is_hypothetical else None, is_command='on' if is_command else None) }}"
             >Next</a
           >
         </li>
@@ -176,8 +146,7 @@ endblock %} {% block content %}
 
     {% else %}
     <div class="alert alert-info">
-      No results found for "{{ query }}"{% if entity %} with entity "{{ entity
-      }}"{% endif %}.
+      No results found for "{{ query }}".
     </div>
     {% endif %}
   </div>
