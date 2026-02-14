@@ -3,7 +3,7 @@ import json
 import os
 from peewee import SqliteDatabase
 from src.app import app
-from src.models import db, Book, Chapter, Verse, VerseIndex
+from src.models import db, Book, Chapter, Verse, VerseIndex, Entity, VerseEntity
 
 class TestBibleAPI(unittest.TestCase):
     def setUp(self):
@@ -15,7 +15,7 @@ class TestBibleAPI(unittest.TestCase):
         db.initialize(self.test_db)
         
         db.connect()
-        db.create_tables([Book, Chapter, Verse, VerseIndex])
+        db.create_tables([Book, Chapter, Verse, VerseIndex, Entity, VerseEntity])
         
         self.populate_data()
         db.close() # Close so app can connect
@@ -26,7 +26,7 @@ class TestBibleAPI(unittest.TestCase):
         # Connect to drop tables
         if self.test_db.is_closed():
             self.test_db.connect()
-        db.drop_tables([Book, Chapter, Verse, VerseIndex])
+        db.drop_tables([Book, Chapter, Verse, VerseIndex, Entity, VerseEntity])
         db.close()
         if os.path.exists(self.db_path):
             os.remove(self.db_path)

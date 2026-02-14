@@ -19,10 +19,15 @@
                     <input class="form-check-input" type="checkbox" id="useLemma" name="use_lemma">
                     <label class="form-check-label" for="useLemma">Match Word Roots (e.g., "love" matches "loved")</label>
                 </div>
-                <!-- Entity filter (simple text input for now, could be a select later) -->
+                <!-- Entity filter with suggestions -->
                 <div class="input-group input-group-sm" style="max-width: 250px;">
                     <span class="input-group-text">Entity Filter</span>
-                    <input type="text" class="form-control" name="entity" placeholder="e.g. Peter">
+                    <input type="text" class="form-control" name="entity" placeholder="e.g. Peter" list="entity-list">
+                    <datalist id="entity-list">
+                        {% for ent in top_entities %}
+                        <option value="{{ ent.name }}">
+                        {% endfor %}
+                    </datalist>
                 </div>
             </div>
         </form>

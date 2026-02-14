@@ -18,7 +18,12 @@
                 
                 <div class="input-group input-group-sm">
                      <span class="input-group-text">Entity</span>
-                     <input type="text" class="form-control" name="entity" value="{{ entity or '' }}" placeholder="Filter..." style="max-width: 120px;">
+                     <input type="text" class="form-control" name="entity" value="{{ entity or '' }}" placeholder="Filter..." list="entity-list-refine" style="max-width: 120px;">
+                     <datalist id="entity-list-refine">
+                        {% for ent in top_entities %}
+                        <option value="{{ ent.name }}">
+                        {% endfor %}
+                     </datalist>
                      <button class="btn btn-outline-secondary" type="submit">Go</button>
                 </div>
             </form>

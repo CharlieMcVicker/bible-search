@@ -1,6 +1,6 @@
 from flask import Flask, jsonify, request, abort, render_template, redirect, url_for
 from peewee import SqliteDatabase, fn
-from src.models import db, Book, Chapter, Verse
+from src.models import db, Book, Chapter, Verse, Entity, VerseEntity
 from src.search import BibleSearch
 import time
 import math
@@ -108,7 +108,14 @@ def search_verses():
 @app.route('/')
 def index():
     books = Book.select().order_by(Book.id)
-    return render_template('index.html', books=books)
+    # Get top 100 entities for the datalist/dropdown
+    top_entities = (Entity
+                    .select(Entity.name)
+                    .join(VerseEntity)
+                    .group_by(Entity.name)
+                    .order_by(fn.COUNT(VerseEntity.id).desc())
+                    .limit(100))
+    return render_template('index.html', books=books, top_entities=top_entities)
 
 @app.route('/read')
 def read_redirect():
@@ -179,9 +186,6 @@ def search_page():
     offset = (page - 1) * per_page
     
     # Check if it's a reference (only if not doing advanced search)
-    # If user checked 'use_lemma', they probably want text search even if it looks like a ref?
-    # Probably safe to skip ref check if use_lemma is on.
-    
     if not use_lemma and not entity and page == 1:
         from src.nlp import extract_bible_references
         ref_meta = extract_bible_references(query)
@@ -199,6 +203,14 @@ def search_page():
     results = searcher.search(query, limit=per_page, offset=offset, use_lemma=use_lemma, entity_filter=entity)
     duration = time.time() - start_time
     
+    # Get top entities for refinement as well
+    top_entities = (Entity
+                    .select(Entity.name)
+                    .join(VerseEntity)
+                    .group_by(Entity.name)
+                    .order_by(fn.COUNT(VerseEntity.id).desc())
+                    .limit(100))
+
     return render_template('results.html', 
                            query=query, 
                            verses=results, 
@@ -206,7 +218,8 @@ def search_page():
                            page=page,
                            per_page=per_page,
                            use_lemma=use_lemma,
-                           entity=entity)
+                           entity=entity,
+                           top_entities=top_entities)
 
 if __name__ == "__main__":
-    app.run(host='0.0.0.0', port=5000, debug=True)
+    app.run(host='0.0.0.0', port=5000, debug=False)
