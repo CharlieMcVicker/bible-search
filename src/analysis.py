@@ -3,56 +3,143 @@ from collections import Counter, defaultdict
 from src.models import Verse, db, SqliteDatabase
 
 def analyze_hypothetical_verbs():
+
     """
-    Analyzes all verses marked as hypothetical and counts the occurrences of each verb form.
+
+    Analyzes all verses marked as hypothetical and counts the occurrences of each verb form
+
+    distinguishing between subclause (e.g., after 'if') and matrix clause.
+
     """
+
     # Initialize database proxy
+
     database = SqliteDatabase('bible.db')
+
     db.initialize(database)
+
     
+
     if db.is_closed():
+
         db.connect()
 
+
+
     print("Loading spaCy model...")
-    nlp = spacy.load("en_core_web_sm", disable=["parser", "ner", "textcat"])
+
+    # We need the parser to determine clause structure
+
+    nlp = spacy.load("en_core_web_sm", disable=["ner", "textcat"])
+
     
+
     hypothetical_verses = Verse.select().where(Verse.is_hypothetical == True)
+
     count = hypothetical_verses.count()
+
     print(f"Analyzing {count} hypothetical verses...")
 
-    verb_form_counts = Counter()
-    verb_lemma_to_forms = defaultdict(Counter)
-    
-    for i, verse in enumerate(hypothetical_verses):
-        if i % 500 == 0 and i > 0:
-            print(f"Processed {i}/{count}...")
-            
-        doc = nlp(verse.text)
-        for token in doc:
-            if token.pos_ == "VERB":
-                form = token.text.lower()
-                lemma = token.lemma_.lower()
-                verb_form_counts[form] += 1
-                verb_lemma_to_forms[lemma][form] += 1
 
-    return verb_form_counts, verb_lemma_to_forms
+
+    subclause_counts = Counter()
+
+    matrix_counts = Counter()
+
+    
+
+    for i, verse in enumerate(hypothetical_verses):
+
+        if i % 500 == 0 and i > 0:
+
+            print(f"Processed {i}/{count}...")
+
+            
+
+        doc = nlp(verse.text)
+
+        
+
+        for token in doc:
+
+            if token.pos_ == "VERB":
+
+                form = token.text.lower()
+
+                
+
+                # Heuristic for subclause vs matrix
+
+                # 1. If the verb or any of its ancestors is an 'advcl' (adverbial clause)
+
+                #    it is likely in the subclause (the 'if' part).
+
+                # 2. If it's the ROOT or a direct child of the ROOT not in an advcl, it's matrix.
+
+                
+
+                is_subclause = False
+
+                curr = token
+
+                while curr.dep_ != "ROOT":
+
+                    if curr.dep_ == "advcl":
+
+                        is_subclause = True
+
+                        break
+
+                    curr = curr.head
+
+                
+
+                if is_subclause:
+
+                    subclause_counts[form] += 1
+
+                else:
+
+                    matrix_counts[form] += 1
+
+
+
+    return subclause_counts, matrix_counts
+
+
 
 if __name__ == "__main__":
-    form_counts, lemma_to_forms = analyze_hypothetical_verbs()
-    
-    print("\nTop 50 Verb Forms in Hypotheticals:")
-    print("-" * 35)
-    for form, count in form_counts.most_common(50):
-        print(f"{form:<15}: {count}")
 
-    print("\nVerb Forms by Lemma (Top 10 Lemmas):")
-    print("-" * 35)
-    # Sort lemmas by total frequency
-    sorted_lemmas = sorted(lemma_to_forms.items(), 
-                           key=lambda x: sum(x[1].values()), 
-                           reverse=True)
+    sub_counts, mat_counts = analyze_hypothetical_verbs()
+
     
-    for lemma, forms in sorted_lemmas[:20]:
-        total = sum(forms.values())
-        forms_str = ", ".join([f"{f} ({c})" for f, c in forms.most_common(5)])
-        print(f"{lemma:<10} ({total:>3}): {forms_str}")
+
+    print("\nTop Verb Forms in Hypotheticals:")
+
+    print(f"{'Form':<15} | {'Subclause':<10} | {'Matrix':<10} | {'Total':<10}")
+
+    print("-" * 55)
+
+    
+
+    all_forms = set(sub_counts.keys()) | set(mat_counts.keys())
+
+    # Sort by total
+
+    sorted_forms = sorted(all_forms, 
+
+                          key=lambda f: sub_counts[f] + mat_counts[f], 
+
+                          reverse=True)
+
+    
+
+    for form in sorted_forms[:50]:
+
+        sub = sub_counts[form]
+
+        mat = mat_counts[form]
+
+        total = sub + mat
+
+        print(f"{form:<15} | {sub:<10} | {mat:<10} | {total:<10}")
