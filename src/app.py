@@ -99,6 +99,22 @@ def search_page():
     is_command = request.args.get("is_command") == "on"
     is_hypothetical = request.args.get("is_hypothetical") == "on"
 
+    # Subclause types from multi-select or multiple checkboxes
+    selected_subclauses = request.args.getlist("subclause_types")
+
+    # Human readable mapping
+    SUBCLAUSE_LABELS = {
+        "any": "Any Subclause",
+        "none": "No Subclauses",
+        "advcl": "Adverbial Clause (When, If, etc.)",
+        "relcl": "Relative Clause (Who, Which, etc.)",
+        "ccomp": "Clausal Complement (He said that...)",
+        "xcomp": "Open Clausal Complement (He wants to...)",
+        "acl": "Adjectival Clause (The effort to...)",
+        "csubj": "Clausal Subject",
+        "csubjpass": "Clausal Passive Subject",
+    }
+
     per_page = 20
     offset = (page - 1) * per_page
 
@@ -111,6 +127,7 @@ def search_page():
         sort=sort,
         is_command=is_command or None,
         is_hypothetical=is_hypothetical or None,
+        subclause_types=selected_subclauses or None,
     )
     duration = time.time() - start_time
 
@@ -125,6 +142,8 @@ def search_page():
         sort=sort,
         is_command=is_command,
         is_hypothetical=is_hypothetical,
+        subclause_labels=SUBCLAUSE_LABELS,
+        selected_subclauses=selected_subclauses,
     )
 
 

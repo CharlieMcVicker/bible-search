@@ -34,6 +34,7 @@ class SearchEngine:
         sort=None,
         is_command=None,
         is_hypothetical=None,
+        subclause_types=None,
     ):
         """
         Performs a full-text search on sentences using BM25 ranking.
@@ -58,11 +59,17 @@ class SearchEngine:
         # If use_lemma, we already set "lemma_text: ...".
         # If not, let's just pass the query directly to FTS match, which searches all indexed columns.
 
-        q = (
-            Sentence.select(Sentence, SentenceIndex.rank().alias("score"))
-            .join(SentenceIndex, on=(Sentence.id == SentenceIndex.rowid))
-            .where(SentenceIndex.match(search_query))
-        )
+        if search_query:
+            q = (
+                Sentence.select(Sentence, SentenceIndex.rank().alias("score"))
+                .join(SentenceIndex, on=(Sentence.id == SentenceIndex.rowid))
+                .where(SentenceIndex.match(search_query))
+            )
+        else:
+            # If no query, just select all with a default score
+            from peewee import Value
+
+            q = Sentence.select(Sentence, Value(0).alias("score"))
 
         # Apply filters
         if is_command is not None:
@@ -70,13 +77,34 @@ class SearchEngine:
         if is_hypothetical is not None:
             q = q.where(Sentence.is_hypothetical == is_hypothetical)
 
+        if subclause_types:
+            if isinstance(subclause_types, str):
+                subclause_types = [subclause_types]
+
+            # Combine multiple subclause filters with OR
+            clause_filters = []
+            for stype in subclause_types:
+                if stype == "any":
+                    clause_filters.append(Sentence.subclause_types.is_null(False))
+                elif stype == "none":
+                    clause_filters.append(Sentence.subclause_types.is_null(True))
+                else:
+                    clause_filters.append(Sentence.subclause_types.contains(stype))
+
+            if clause_filters:
+                from peewee import reduce, operator
+
+                q = q.where(reduce(operator.or_, clause_filters))
+
         # Sorting
         if sort == "length_asc":
             q = q.order_by(fn.length(Sentence.syllabary))
         elif sort == "length_desc":
             q = q.order_by(fn.length(Sentence.syllabary).desc())
-        else:
+        elif search_query:
             q = q.order_by(SentenceIndex.rank())
+        else:
+            q = q.order_by(Sentence.ref_id)
 
         results = q.limit(limit).offset(offset)
         return list(results)

@@ -92,6 +92,25 @@ def ingest_sentences():
                     if next_token and next_token.lower_ in {"shalt", "shall"}:
                         is_command = True
 
+            # Subclause detection
+            found_subclauses = set()
+            interesting_deps = {
+                "advcl",
+                "relcl",
+                "ccomp",
+                "xcomp",
+                "acl",
+                "csubj",
+                "csubjpass",
+            }
+            for token in doc:
+                if token.dep_ in interesting_deps:
+                    found_subclauses.add(token.dep_)
+
+            subclause_types = (
+                ",".join(sorted(list(found_subclauses))) if found_subclauses else None
+            )
+
             batch.append(
                 {
                     "ref_id": ref_id,
@@ -102,6 +121,7 @@ def ingest_sentences():
                     "lemma_text": lemma_text,
                     "is_hypothetical": is_hypothetical,
                     "is_command": is_command,
+                    "subclause_types": subclause_types,
                 }
             )
 
