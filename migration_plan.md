@@ -1,81 +1,56 @@
-# Migration Plan: Bible to Sentences Corpus
+# Migration Plan: Bible to Sentences Corpus (Status: Core Migration Complete)
 
 ## Goal
 
-Switch the primary data source from the KJV Bible to `sentences.json`, while maintaining the ability to ingest the Bible for legacy purposes. The frontend will be updated to reflect this change, removing "Bible" specific terminology.
+Switch the primary data source from the KJV Bible to `sentences.json`, while maintaining the ability to ingest the Bible for legacy purposes. The frontend has been updated to reflect this change, removing "Bible" specific terminology and focusing on Cherokee sentence search.
+
+## Completed Tasks
+
+- [x] **Data Models**: Refactored `src/models.py` to include `Sentence` and `SentenceIndex` (FTS5).
+- [x] **Ingestion Logic**: Developed `src/ingest_sentences.py` to populate the database from `data/sentences.json`.
+- [x] **Search Engine**: Refactored `src/search.py` to target the `Sentence` model and implement BM25 ranking.
+- [x] **Backend Update**: Updated `src/app.py` to use the new `SearchEngine` and updated routes for sentence search.
+- [x] **Frontend Redesign**:
+  - [x] Renamed site to "Cherokee Search".
+  - [x] Removed Bible-specific navigation/grid.
+  - [x] Updated search results to display Syllabary, Phonetic, English, and Audio.
+  - [x] Added filters for "Imperative" (Command) and "Hypothetical".
 
 ## User Review Required
 
 > [!IMPORTANT]
 >
-> - The application will primarily search `sentences.json`. Bible search will be effectively disabled in the UI unless explicitly requested to be kept as an option.
-> - "Books of the Bible" browsing will be removed from the home page.
-> - Existing Bible data will be preserved in the database if already ingested, but new specific tables for Sentences will be used for the main application.
+> - The application now primarily searches `sentences.json`. Bible search is disabled in the UI.
+> - "Books of the Bible" browsing has been removed from the home page.
+> - Existing Bible data is preserved in the database if already ingested, but new tables are used for the main application.
 
-## Proposed Changes
+## Detailed Implementation Notes
 
 ### Data & Models
 
-#### [NEW] [src/models.py](file:///Users/charlesmcvicker/code/bible-search/src/models.py)
-
-- Refactor to add `Sentence` model.
-- Add `SentenceIndex` for FTS5 search on `Sentence` entries.
-- Fields: `ref_id` (from JSON id), `english`, `syllabary`, `phonetic`, `audio`, `lemma_text`.
+- `Sentence` model fields: `ref_id`, `english`, `syllabary`, `phonetic`, `audio`, `lemma_text`, `is_command`, `is_hypothetical`.
+- `SentenceIndex` provides FTS5 search across `english`, `lemma_text`, and `syllabary`.
 
 ### Ingestion
 
-#### [MOVE] `sentences.json` -> `data/sentences.json`
-
-#### [NEW] [src/ingest_sentences.py](file:///Users/charlesmcvicker/code/bible-search/src/ingest_sentences.py)
-
-- Script to load `data/sentences.json`.
-- Uses `spaCy` for lemmatization of English text (similar to `ingest.py`).
-- Populates `Sentence` table.
+- `data/sentences.json` is the source of truth.
+- `src/ingest_sentences.py` handles loading and lemmatization using `spaCy`.
 
 ### Search Engine
 
-#### [MODIFY] [src/search.py](file:///Users/charlesmcvicker/code/bible-search/src/search.py)
+- `SearchEngine` class now handles all sentence search logic.
+- Supports sorting by relevance (rank) and syllabary length.
+- Optional lemma-based search.
 
-- Rename `BibleSearch` to `SearchEngine`.
-- Update `search()` method to query `SentenceIndex` and return `Sentence` objects.
-- Remove or disable `parse_and_search` reference logic if not applicable to `sentences.json` IDs (or adapt if IDs like "8.1-s1" have semantics we can use later).
+## Remaining / Follow-up Tasks
 
-### Backend Application
+- [ ] Update documentation (`README.md`) to reflect the new primary purpose.
+- [ ] Verify audio file paths and availability in `src/static/audio/`.
+- [ ] Final verification of "Imperative" and "Hypothetical" tagging logic in `ingest_sentences.py`.
 
-#### [MODIFY] [src/app.py](file:///Users/charlesmcvicker/code/bible-search/src/app.py)
+## Verification Results
 
-- Update code to use `SearchEngine` targeting `Sentence` model.
-- Remove routes specific to Bible browsing (e.g., `read_chapter`) if they don't apply, or adapt them to browse Sentences.
-
-### Frontend
-
-#### [MODIFY] [src/templates/base.html](file:///Users/charlesmcvicker/code/bible-search/src/templates/base.html)
-
-- Change title "Bible Search" to "Cherokee Search" (or generic).
-- Update footer.
-
-#### [MODIFY] [src/templates/index.html](file:///Users/charlesmcvicker/code/bible-search/src/templates/index.html)
-
-- Remove "Books of the Bible" grid.
-- Update hero text.
-
-#### [MODIFY] [src/templates/results.html](file:///Users/charlesmcvicker/code/bible-search/src/templates/results.html)
-
-- Update result card to display `english`, `syllabary`, `phonetic`.
-- Remove "Command/Hypothetical" badges unless we compute them for Sentences too (we check `ingest.py` logic, we can probably keep the logic if useful, but `sentences.json` might not map 1:1).
-
-## Verification Plan
-
-### Automated Tests
-
-- Run `python3 src/ingest_sentences.py` to verify ingestion.
-- Run `pytest` if there are existing tests (check `tests/`).
-- Create a simple script `verify_search.py` to query the new `Sentence` model.
-
-### Manual Verification
-
-- Start app: `python3 -m src.app`.
-- Visit `http://localhost:4000`.
-- Verify Home page has no Bible references.
-- Perform a search (e.g., "playing ball").
-- Verify results show English, Syllabary, and Phonetic.
+- [x] `python3 src/ingest_sentences.py` verified.
+- [x] `pytest` runs (after conversion to pytest).
+- [x] Manual verification of search functionality on `localhost:4000`.
+- [x] Verification of English, Phonetic, and Syllabary display.

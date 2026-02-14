@@ -1,16 +1,18 @@
 {
-  "name": "bible-search",
+  "name": "cherokee-sentence-search",
   "version": "1.0.0",
-  "description": "Bible scraping and search project",
-  "main": "scraper/scrape_bible.js",
+  "description": "Cherokee sentence corpus search and browsing",
+  "main": "src/app.py",
   "scripts": {
-    "scrape": "node scraper/scrape_bible.js",
-    "test": "node scraper/test_scrape.js"
+    "dev": "python3 -m src.app",
+    "ingest": "python3 -m src.ingest_sentences",
+    "test": "pytest"
   },
   "keywords": [
-    "bible",
-    "scraper",
-    "search"
+    "cherokee",
+    "language",
+    "search",
+    "corpus"
   ],
   "author": "",
   "license": "ISC",

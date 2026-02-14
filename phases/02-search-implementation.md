@@ -1,3 +1,5 @@
+> [!NOTE]
+> This phase document pertains to the original Bible search implementation. The project has since migrated to a general Cherokee Sentence Search corpus. See [migration_plan.md](../migration_plan.md) for details.
 # Phase 2: Core Search Logic Implementation
 
 ## Goal
