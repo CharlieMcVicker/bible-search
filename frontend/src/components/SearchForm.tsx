@@ -1,7 +1,12 @@
 import React from "react";
 import { Search, Loader2 } from "lucide-react";
 import { Filters } from "../types";
-import { AVAILABLE_TAGS } from "../constants";
+import {
+  AVAILABLE_TAGS,
+  AVAILABLE_SUBCLAUSE_TYPES,
+  SUBCLAUSE_TYPE_LABELS,
+  TAG_LABELS,
+} from "../constants";
 
 interface SearchFormProps {
   query: string;
@@ -88,6 +93,27 @@ export default function SearchForm({
 
         <div className="flex items-center gap-2">
           <span className="text-sm font-bold text-slate-400 uppercase tracking-tight">
+            Subclause:
+          </span>
+          <select
+            className="select text-sm py-1"
+            value={filters.subclause_types[0] || ""}
+            onChange={(e) => {
+              const val = e.target.value;
+              setFilters({ ...filters, subclause_types: val ? [val] : [] });
+            }}
+          >
+            <option value="">All Types</option>
+            {AVAILABLE_SUBCLAUSE_TYPES.map((t) => (
+              <option key={t} value={t}>
+                {SUBCLAUSE_TYPE_LABELS[t] || t}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        <div className="flex items-center gap-2">
+          <span className="text-sm font-bold text-slate-400 uppercase tracking-tight">
             Filter by Tag:
           </span>
           <select
@@ -98,7 +124,7 @@ export default function SearchForm({
             <option value="">All Tags</option>
             {AVAILABLE_TAGS.map((t) => (
               <option key={t} value={t}>
-                {t}
+                {TAG_LABELS[t] || t}
               </option>
             ))}
           </select>

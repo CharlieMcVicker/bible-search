@@ -63,8 +63,10 @@ export default function SearchPage() {
       !query &&
       !filters.is_command &&
       !filters.is_hypothetical &&
+      !filters.is_time_clause &&
       !filters.tag &&
-      !filters.untagged_only
+      !filters.untagged_only &&
+      filters.subclause_types.length === 0
     )
       return;
 
