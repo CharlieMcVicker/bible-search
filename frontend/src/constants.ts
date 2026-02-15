@@ -5,6 +5,9 @@ export const AVAILABLE_TAGS = [
   "incompletive deverbal",
   "completive deverbal (past)",
   "completive deverbal (non-past)",
+  "ni-vna",
+  "other timing form",
+  "coordinating conjunction",
 ];
 
 export const AVAILABLE_SUBCLAUSE_TYPES = [
@@ -34,4 +37,7 @@ export const TAG_LABELS: Record<string, string> = {
   "incompletive deverbal": "Incompletive Deverbal",
   "completive deverbal (past)": "Completive Deverbal (Past)",
   "completive deverbal (non-past)": "Completive Deverbal (Non-Past)",
+  "ni-vna": "Ni-Vna",
+  "other timing form": "Other Timing Form",
+  "coordinating conjunction": "Coordinating Conjunction",
 };
