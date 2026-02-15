@@ -1,24 +1,8 @@
-import React, { useState, useEffect } from "react";
-import {
-  Search,
-  Loader2,
-  Tag,
-  ChevronLeft,
-  ChevronRight,
-  Play,
-  Volume2,
-} from "lucide-react";
+import React, { useState } from "react";
+import { Search, Loader2, Tag, Play } from "lucide-react";
 import clsx from "clsx";
 import TaggingDrawer from "./components/TaggingDrawer";
-
-const SUBCLAUSE_LABELS = {
-  advcl: "Adverbial Clause",
-  relcl: "Relative Clause",
-  ccomp: "Clausal Complement",
-  xcomp: "Open Clausal Complement",
-  acl: "Adjectival Clause",
-  csubj: "Clausal Subject",
-};
+import { SearchResult, Filters, ActiveWord } from "./types";
 
 const AVAILABLE_TAGS = [
   "converb",
@@ -29,11 +13,11 @@ const AVAILABLE_TAGS = [
 
 export default function App() {
   const [query, setQuery] = useState("");
-  const [results, setResults] = useState([]);
+  const [results, setResults] = useState<SearchResult[]>([]);
   const [loading, setLoading] = useState(false);
   const [taggingMode, setTaggingMode] = useState(false);
-  const [activeWord, setActiveWord] = useState(null);
-  const [filters, setFilters] = useState({
+  const [activeWord, setActiveWord] = useState<ActiveWord | null>(null);
+  const [filters, setFilters] = useState<Filters>({
     use_lemma: false,
     is_hypothetical: false,
     is_command: false,
@@ -42,7 +26,7 @@ export default function App() {
     tag: "",
   });
 
-  const performSearch = async (e) => {
+  const performSearch = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
     if (!query && !filters.is_command && !filters.is_hypothetical) return;
 
@@ -50,7 +34,7 @@ export default function App() {
     try {
       const params = new URLSearchParams({
         q: query,
-        use_lemma: filters.use_lemma,
+        use_lemma: String(filters.use_lemma),
         is_hypothetical: filters.is_hypothetical ? "true" : "false",
         is_command: filters.is_command ? "true" : "false",
         is_time_clause: filters.is_time_clause ? "true" : "false",
@@ -74,7 +58,11 @@ export default function App() {
     }
   };
 
-  const handleTagUpdated = (sentenceId, wordIndex, tag) => {
+  const handleTagUpdated = (
+    sentenceId: string,
+    wordIndex: number,
+    tag: string | null,
+  ) => {
     setResults((prev) =>
       prev.map((r) => {
         if (r.ref_id === sentenceId) {
@@ -83,8 +71,12 @@ export default function App() {
             (t) => t.word_index === wordIndex,
           );
           if (existingIdx >= 0) {
-            newTags[existingIdx] = { word_index: wordIndex, tag };
-          } else {
+            if (tag === null) {
+              newTags.splice(existingIdx, 1);
+            } else {
+              newTags[existingIdx] = { word_index: wordIndex, tag };
+            }
+          } else if (tag !== null) {
             newTags.push({ word_index: wordIndex, tag });
           }
           return { ...r, tags: newTags };
@@ -94,7 +86,9 @@ export default function App() {
     );
   };
 
-  const toggleFilter = (key) => {
+  const toggleFilter = (
+    key: keyof Omit<Filters, "subclause_types" | "tag">,
+  ) => {
     setFilters((prev) => ({ ...prev, [key]: !prev[key] }));
   };
 
@@ -121,12 +115,14 @@ export default function App() {
 
         <div className="flex flex-wrap justify-center items-center gap-6 mt-6">
           <div className="flex flex-wrap gap-4">
-            {[
-              "use_lemma",
-              "is_hypothetical",
-              "is_command",
-              "is_time_clause",
-            ].map((f) => (
+            {(
+              [
+                "use_lemma",
+                "is_hypothetical",
+                "is_command",
+                "is_time_clause",
+              ] as const
+            ).map((f) => (
               <label
                 key={f}
                 className="flex items-center gap-2 cursor-pointer select-none"
@@ -269,9 +265,11 @@ export default function App() {
                 ?.tags?.find((t) => t.word_index === activeWord.wordIndex)?.tag
             : null
         }
-        onTagSelected={(tag) =>
-          handleTagUpdated(activeWord.sentenceId, activeWord.wordIndex, tag)
-        }
+        onTagSelected={(tag) => {
+          if (activeWord) {
+            handleTagUpdated(activeWord.sentenceId, activeWord.wordIndex, tag);
+          }
+        }}
       />
     </div>
   );

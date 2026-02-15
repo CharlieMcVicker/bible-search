@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import { X, Check, Plus } from "lucide-react";
 import clsx from "clsx";
 import { motion, AnimatePresence } from "framer-motion";
@@ -10,6 +10,16 @@ const DEFAULT_TAGS = [
   "completive deverbal",
 ];
 
+interface TaggingDrawerProps {
+  isOpen: boolean;
+  onClose: () => void;
+  word?: string;
+  sentenceId?: string;
+  wordIndex?: number;
+  currentTag?: string | null;
+  onTagSelected: (tag: string | null) => void;
+}
+
 export default function TaggingDrawer({
   isOpen,
   onClose,
@@ -18,11 +28,11 @@ export default function TaggingDrawer({
   wordIndex,
   currentTag,
   onTagSelected,
-}) {
+}: TaggingDrawerProps) {
   const [customTag, setCustomTag] = useState("");
   const [loading, setLoading] = useState(false);
 
-  const handleTag = async (tag) => {
+  const handleTag = async (tag: string | null) => {
     setLoading(true);
     try {
       const isRemoval = tag === null;
