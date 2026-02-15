@@ -9,6 +9,7 @@ import {
   Volume2,
 } from "lucide-react";
 import clsx from "clsx";
+import TaggingDrawer from "./components/TaggingDrawer";
 
 const SUBCLAUSE_LABELS = {
   advcl: "Adverbial Clause",
@@ -24,6 +25,7 @@ export default function App() {
   const [results, setResults] = useState([]);
   const [loading, setLoading] = useState(false);
   const [taggingMode, setTaggingMode] = useState(false);
+  const [activeWord, setActiveWord] = useState(null);
   const [filters, setFilters] = useState({
     use_lemma: false,
     is_hypothetical: false,
@@ -58,6 +60,26 @@ export default function App() {
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleTagUpdated = (sentenceId, wordIndex, tag) => {
+    setResults((prev) =>
+      prev.map((r) => {
+        if (r.ref_id === sentenceId) {
+          const newTags = [...(r.tags || [])];
+          const existingIdx = newTags.findIndex(
+            (t) => t.word_index === wordIndex,
+          );
+          if (existingIdx >= 0) {
+            newTags[existingIdx] = { word_index: wordIndex, tag };
+          } else {
+            newTags.push({ word_index: wordIndex, tag });
+          }
+          return { ...r, tags: newTags };
+        }
+        return r;
+      }),
+    );
   };
 
   const toggleFilter = (key) => {
@@ -130,27 +152,37 @@ export default function App() {
           {results.map((r) => (
             <div key={r.ref_id} className="card">
               <div className="flex justify-between mb-4">
-                <div className="flex flex-wrap gap-x-2 gap-y-1 text-2xl font-medium text-blue-700">
-                  {r.syllabary.split(" ").map((word, i) => (
-                    <React.Fragment key={i}>
-                      <span
-                        className={clsx(
-                          "rounded px-1 transition-colors",
-                          taggingMode &&
-                            "hover:bg-blue-100 cursor-pointer border border-dashed border-transparent hover:border-blue-400",
+                <div className="flex flex-wrap gap-x-2 gap-y-4 text-2xl font-medium text-blue-700">
+                  {r.syllabary.split(" ").map((word, i) => {
+                    const tag = r.tags?.find((t) => t.word_index === i)?.tag;
+                    return (
+                      <div key={i} className="flex flex-col items-center">
+                        <span
+                          className={clsx(
+                            "rounded px-1 transition-colors relative",
+                            taggingMode &&
+                              "hover:bg-blue-100 cursor-pointer border border-dashed border-transparent hover:border-blue-400",
+                          )}
+                          onClick={() => {
+                            if (taggingMode) {
+                              setActiveWord({
+                                word,
+                                sentenceId: r.ref_id,
+                                wordIndex: i,
+                              });
+                            }
+                          }}
+                        >
+                          {word}
+                        </span>
+                        {tag && (
+                          <span className="text-[10px] uppercase font-bold text-slate-400 bg-slate-100 px-1 rounded-sm mt-1">
+                            {tag}
+                          </span>
                         )}
-                        onClick={() => {
-                          if (taggingMode) {
-                            const tag = prompt(`Tag "${word}" in ${r.ref_id}:`);
-                            // To be implemented: API call
-                            console.log(tag);
-                          }
-                        }}
-                      >
-                        {word}
-                      </span>{" "}
-                    </React.Fragment>
-                  ))}
+                      </div>
+                    );
+                  })}
                 </div>
                 <span className="text-xs font-mono text-slate-400">
                   {r.ref_id}
@@ -184,6 +216,24 @@ export default function App() {
           ))}
         </div>
       </main>
+
+      <TaggingDrawer
+        isOpen={!!activeWord}
+        onClose={() => setActiveWord(null)}
+        word={activeWord?.word}
+        sentenceId={activeWord?.sentenceId}
+        wordIndex={activeWord?.wordIndex}
+        currentTag={
+          activeWord
+            ? results
+                .find((r) => r.ref_id === activeWord.sentenceId)
+                ?.tags?.find((t) => t.word_index === activeWord.wordIndex)?.tag
+            : null
+        }
+        onTagSelected={(tag) =>
+          handleTagUpdated(activeWord.sentenceId, activeWord.wordIndex, tag)
+        }
+      />
     </div>
   );
 }
