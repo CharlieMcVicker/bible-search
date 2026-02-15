@@ -5,7 +5,6 @@ import clsx from "clsx";
 import SearchForm from "../components/SearchForm";
 import SentenceCard from "../components/SentenceCard";
 import Pagination from "../components/Pagination";
-import TaggingDrawer from "../components/TaggingDrawer";
 import { SearchResult, Filters, ActiveWord } from "../types";
 
 const PAGE_SIZE = 10;
@@ -151,7 +150,10 @@ export default function SearchPage() {
                 : "Enter a search to begin"}
           </h2>
           <button
-            onClick={() => setTaggingMode(!taggingMode)}
+            onClick={() => {
+              setTaggingMode(!taggingMode);
+              setActiveWord(null);
+            }}
             className={clsx(
               "btn flex items-center gap-2",
               taggingMode ? "btn-primary" : "bg-slate-200",
@@ -169,6 +171,21 @@ export default function SearchPage() {
               result={r}
               taggingMode={taggingMode}
               onWordClick={setActiveWord}
+              activeWordIndex={
+                activeWord?.sentenceId === r.ref_id
+                  ? activeWord.wordIndex
+                  : undefined
+              }
+              onTagSelected={(tag) => {
+                if (activeWord) {
+                  handleTagUpdated(
+                    activeWord.sentenceId,
+                    activeWord.wordIndex,
+                    tag,
+                  );
+                  setActiveWord(null);
+                }
+              }}
             />
           ))}
         </div>
@@ -182,26 +199,6 @@ export default function SearchPage() {
           />
         )}
       </main>
-
-      <TaggingDrawer
-        isOpen={!!activeWord}
-        onClose={() => setActiveWord(null)}
-        word={activeWord?.word}
-        sentenceId={activeWord?.sentenceId}
-        wordIndex={activeWord?.wordIndex}
-        currentTag={
-          activeWord
-            ? results
-                .find((r) => r.ref_id === activeWord.sentenceId)
-                ?.tags?.find((t) => t.word_index === activeWord.wordIndex)?.tag
-            : null
-        }
-        onTagSelected={(tag) => {
-          if (activeWord) {
-            handleTagUpdated(activeWord.sentenceId, activeWord.wordIndex, tag);
-          }
-        }}
-      />
     </div>
   );
 }
