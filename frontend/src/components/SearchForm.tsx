@@ -1,14 +1,7 @@
 import React from "react";
 import { Search, Loader2 } from "lucide-react";
 import { Filters } from "../types";
-
-const AVAILABLE_TAGS = [
-  "converb",
-  "yi+converb",
-  "yi+present",
-  "incompletive deverbal",
-  "completive deverbal",
-];
+import { AVAILABLE_TAGS } from "../constants";
 
 interface SearchFormProps {
   query: string;

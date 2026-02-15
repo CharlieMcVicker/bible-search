@@ -2,14 +2,7 @@ import { useState } from "react";
 import { X, Check, Plus } from "lucide-react";
 import clsx from "clsx";
 import { motion, AnimatePresence } from "framer-motion";
-
-const DEFAULT_TAGS = [
-  "converb",
-  "yi+converb",
-  "yi+present",
-  "incompletive deverbal",
-  "completive deverbal",
-];
+import { AVAILABLE_TAGS } from "../constants";
 
 interface TaggingDrawerProps {
   isOpen: boolean;
@@ -100,7 +93,7 @@ export default function TaggingDrawer({
             </div>
 
             <div className="grid grid-cols-2 gap-3 mb-8">
-              {DEFAULT_TAGS.map((tag) => (
+              {AVAILABLE_TAGS.map((tag) => (
                 <motion.button
                   key={tag}
                   whileHover={{ scale: 1.02 }}
