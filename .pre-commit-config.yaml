@@ -23,3 +23,10 @@ repos:
         language: system
         pass_filenames: false
         always_run: true
+      - id: frontend-type-check
+        name: frontend-type-check
+        entry: bash -c "cd frontend && npm run type-check"
+        language: system
+        pass_filenames: false
+        files: ^frontend/
+        types_or: [ts, tsx]
