@@ -66,14 +66,14 @@ pytest
 
 ## Project Structure
 
-- **`src/`**: Python application source code.
+- **`src/`**: Backend Python application code.
   - `app.py`: Flask application entry point.
   - `models.py`: Database models (Peewee).
-  - `search.py`: Search engine logic using BM25.
+  - `search.py`: Search engine logic.
   - `ingest_sentences.py`: Sentence corpus ingestion script.
-  - `nlp.py`: Natural Language Processing utilities.
-  - `templates/`: HTML templates for the search interface.
-  - `static/`: CSS, JavaScript, and audio files.
+- **`frontend/`**: React application (Typescript/React/Vite).
+  - `src/`: React components and logic.
+  - `dist/`: Built frontend files (served by Flask).
 - **`data/`**: Sentence corpus data storage (`sentences.json`).
 - **`tests/`**: Unit and integration tests.
-- **`scraper/`**: (Legacy) Node.js scripts for Bible data acquisition.
+- **`scraper/`**: (Legacy) node.js scripts.

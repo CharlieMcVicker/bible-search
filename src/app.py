@@ -1,10 +1,20 @@
-from flask import Flask, jsonify, request, abort, render_template, redirect, url_for
+from flask import (
+    Flask,
+    jsonify,
+    request,
+    abort,
+    render_template,
+    redirect,
+    url_for,
+    send_from_directory,
+)
 from peewee import SqliteDatabase
 from src.models import db, Sentence, SentenceTag
 from src.search import SearchEngine
 import time
+import os
 
-app = Flask(__name__)
+app = Flask(__name__, static_folder="../frontend/dist", static_url_path="/")
 
 # Initialize database
 database = SqliteDatabase("bible.db")
@@ -25,6 +35,11 @@ def _db_close(exc):
         db.close()
 
 
+@app.route("/")
+def serve():
+    return send_from_directory(app.static_folder, "index.html")
+
+
 # API Routes
 
 
@@ -35,7 +50,13 @@ def search_sentences():
     # Check if we have filters
     has_filters = any(
         k in request.args
-        for k in ["is_command", "is_hypothetical", "is_time_clause", "tag"]
+        for k in [
+            "is_command",
+            "is_hypothetical",
+            "is_time_clause",
+            "tag",
+            "subclause_types",
+        ]
     )
 
     if not query and not has_filters:
@@ -56,6 +77,7 @@ def search_sentences():
         if is_time_clause is not None:
             is_time_clause = is_time_clause.lower() == "true"
         tag_filter = request.args.get("tag")
+        subclause_types = request.args.getlist("subclause_types")
     except ValueError:
         abort(400, description="Invalid limit or offset")
 
@@ -70,6 +92,7 @@ def search_sentences():
         is_hypothetical=is_hypothetical,
         is_time_clause=is_time_clause,
         tag_filter=tag_filter,
+        subclause_types=subclause_types or None,
     )
     duration = time.time() - start_time
 
@@ -127,89 +150,11 @@ def remove_tag(ref_id):
     return jsonify({"status": "success", "deleted": rows})
 
 
-# Frontend Routes
-@app.route("/")
-def index():
-    return render_template("index.html")
-
-
-@app.route("/search")
-def search_page():
-    query = request.args.get("q", "")
-
-    # Check if we have filters
-    has_filters = any(
-        k in request.args
-        for k in [
-            "is_command",
-            "is_hypothetical",
-            "is_time_clause",
-            "tag",
-            "subclause_types",
-        ]
-    )
-
-    if not query and not has_filters:
-        return redirect(url_for("index"))
-
-    page = request.args.get("page", 1, type=int)
-    use_lemma = request.args.get("use_lemma", "off") == "on"
-    sort = request.args.get("sort", "rank").strip()
-    is_command = request.args.get("is_command") == "on"
-    is_hypothetical = request.args.get("is_hypothetical") == "on"
-    is_time_clause = request.args.get("is_time_clause") == "on"
-    tag_filter = request.args.get("tag", "").strip() or None
-
-    # Subclause types from multi-select or multiple checkboxes
-    selected_subclauses = request.args.getlist("subclause_types")
-
-    # Human readable mapping
-    SUBCLAUSE_LABELS = {
-        "any": "Any Subclause",
-        "none": "No Subclauses",
-        "advcl": "Adverbial Clause (When, If, etc.)",
-        "relcl": "Relative Clause (Who, Which, etc.)",
-        "ccomp": "Clausal Complement (He said that...)",
-        "xcomp": "Open Clausal Complement (He wants to...)",
-        "acl": "Adjectival Clause (The effort to...)",
-        "csubj": "Clausal Subject",
-        "csubjpass": "Clausal Passive Subject",
-    }
-
-    per_page = 20
-    offset = (page - 1) * per_page
-
-    start_time = time.time()
-    results = searcher.search(
-        query,
-        limit=per_page,
-        offset=offset,
-        use_lemma=use_lemma,
-        sort=sort,
-        is_command=is_command or None,
-        is_hypothetical=is_hypothetical or None,
-        subclause_types=selected_subclauses or None,
-        is_time_clause=is_time_clause or None,
-        tag_filter=tag_filter,
-    )
-    duration = time.time() - start_time
-
-    return render_template(
-        "results.html",
-        query=query,
-        sentences=results,
-        count=len(results),
-        page=page,
-        per_page=per_page,
-        use_lemma=use_lemma,
-        sort=sort,
-        is_command=is_command,
-        is_hypothetical=is_hypothetical,
-        is_time_clause=is_time_clause,
-        tag_filter=tag_filter,
-        subclause_labels=SUBCLAUSE_LABELS,
-        selected_subclauses=selected_subclauses,
-    )
+@app.route("/<path:path>")
+def static_proxy(path):
+    if os.path.exists(os.path.join(app.static_folder, path)):
+        return send_from_directory(app.static_folder, path)
+    return send_from_directory(app.static_folder, "index.html")
 
 
 if __name__ == "__main__":

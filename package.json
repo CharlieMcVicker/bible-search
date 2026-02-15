@@ -5,6 +5,7 @@
   "main": "src/app.py",
   "scripts": {
     "dev": "python3 -m src.app",
+    "frontend:dev": "npm --prefix frontend run dev",
     "ingest": "python3 -m src.ingest_sentences",
     "test": "pytest"
   },

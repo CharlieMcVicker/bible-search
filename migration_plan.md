@@ -15,6 +15,8 @@ Switch the primary data source from the KJV Bible to `sentences.json`, while mai
   - [x] Removed Bible-specific navigation/grid.
   - [x] Updated search results to display Syllabary, Phonetic, English, and Audio.
   - [x] Added filters for "Imperative" (Command) and "Hypothetical".
+- [x] **Project Structure**: Moved frontend to root directory (`frontend/`) for better separation from Python backend.
+- [x] **Documentation**: Updated `README.md` with new project layout.
 
 ## User Review Required
 
