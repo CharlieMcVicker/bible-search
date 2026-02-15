@@ -1,18 +1,26 @@
-import React, { useState, useEffect } from 'react';
-import { Search, Loader2, Tag, ChevronLeft, ChevronRight, Play, Volume2 } from 'lucide-react';
-import clsx from 'clsx';
+import React, { useState, useEffect } from "react";
+import {
+  Search,
+  Loader2,
+  Tag,
+  ChevronLeft,
+  ChevronRight,
+  Play,
+  Volume2,
+} from "lucide-react";
+import clsx from "clsx";
 
 const SUBCLAUSE_LABELS = {
-  "advcl": "Adverbial Clause",
-  "relcl": "Relative Clause",
-  "ccomp": "Clausal Complement",
-  "xcomp": "Open Clausal Complement",
-  "acl": "Adjectival Clause",
-  "csubj": "Clausal Subject",
+  advcl: "Adverbial Clause",
+  relcl: "Relative Clause",
+  ccomp: "Clausal Complement",
+  xcomp: "Open Clausal Complement",
+  acl: "Adjectival Clause",
+  csubj: "Clausal Subject",
 };
 
 export default function App() {
-  const [query, setQuery] = useState('');
+  const [query, setQuery] = useState("");
   const [results, setResults] = useState([]);
   const [loading, setLoading] = useState(false);
   const [taggingMode, setTaggingMode] = useState(false);
@@ -21,7 +29,7 @@ export default function App() {
     is_hypothetical: false,
     is_command: false,
     is_time_clause: false,
-    subclause_types: []
+    subclause_types: [],
   });
 
   const performSearch = async (e) => {
@@ -33,12 +41,14 @@ export default function App() {
       const params = new URLSearchParams({
         q: query,
         use_lemma: filters.use_lemma,
-        is_hypothetical: filters.is_hypothetical ? 'true' : 'false',
-        is_command: filters.is_command ? 'true' : 'false',
-        is_time_clause: filters.is_time_clause ? 'true' : 'false',
+        is_hypothetical: filters.is_hypothetical ? "true" : "false",
+        is_command: filters.is_command ? "true" : "false",
+        is_time_clause: filters.is_time_clause ? "true" : "false",
       });
 
-      filters.subclause_types.forEach(t => params.append('subclause_types', t));
+      filters.subclause_types.forEach((t) =>
+        params.append("subclause_types", t),
+      );
 
       const res = await fetch(`/api/search?${params}`);
       const data = await res.json();
@@ -51,7 +61,7 @@ export default function App() {
   };
 
   const toggleFilter = (key) => {
-    setFilters(prev => ({ ...prev, [key]: !prev[key] }));
+    setFilters((prev) => ({ ...prev, [key]: !prev[key] }));
   };
 
   return (
@@ -66,36 +76,50 @@ export default function App() {
             onChange={(e) => setQuery(e.target.value)}
           />
           <button className="btn btn-primary flex items-center gap-2">
-            {loading ? <Loader2 className="animate-spin" /> : <Search size={20} />}
+            {loading ? (
+              <Loader2 className="animate-spin" />
+            ) : (
+              <Search size={20} />
+            )}
             Search
           </button>
         </form>
 
         <div className="flex flex-wrap justify-center gap-4 mt-6">
-          {['use_lemma', 'is_hypothetical', 'is_command', 'is_time_clause'].map(f => (
-            <label key={f} className="flex items-center gap-2 cursor-pointer select-none">
-              <input
-                type="checkbox"
-                checked={filters[f]}
-                onChange={() => toggleFilter(f)}
-                className="w-4 h-4"
-              />
-              <span className="text-sm font-medium capitalize">
-                {f.replace('is_', '').replace('_', ' ')}
-              </span>
-            </label>
-          ))}
+          {["use_lemma", "is_hypothetical", "is_command", "is_time_clause"].map(
+            (f) => (
+              <label
+                key={f}
+                className="flex items-center gap-2 cursor-pointer select-none"
+              >
+                <input
+                  type="checkbox"
+                  checked={filters[f]}
+                  onChange={() => toggleFilter(f)}
+                  className="w-4 h-4"
+                />
+                <span className="text-sm font-medium capitalize">
+                  {f.replace("is_", "").replace("_", " ")}
+                </span>
+              </label>
+            ),
+          )}
         </div>
       </header>
 
       <main>
         <div className="flex justify-between items-center mb-6">
           <h2 className="text-xl font-semibold">
-            {results.length > 0 ? `Results (${results.length})` : 'Enter a search to begin'}
+            {results.length > 0
+              ? `Results (${results.length})`
+              : "Enter a search to begin"}
           </h2>
           <button
             onClick={() => setTaggingMode(!taggingMode)}
-            className={clsx("btn flex items-center gap-2", taggingMode ? "btn-primary" : "bg-slate-200")}
+            className={clsx(
+              "btn flex items-center gap-2",
+              taggingMode ? "btn-primary" : "bg-slate-200",
+            )}
           >
             <Tag size={18} />
             {taggingMode ? "Tagging Mode: ON" : "Enable Tagging"}
@@ -107,12 +131,13 @@ export default function App() {
             <div key={r.ref_id} className="card">
               <div className="flex justify-between mb-4">
                 <div className="flex flex-wrap gap-x-2 gap-y-1 text-2xl font-medium text-blue-700">
-                  {r.syllabary.split(' ').map((word, i) => (
+                  {r.syllabary.split(" ").map((word, i) => (
                     <React.Fragment key={i}>
                       <span
                         className={clsx(
                           "rounded px-1 transition-colors",
-                          taggingMode && "hover:bg-blue-100 cursor-pointer border border-dashed border-transparent hover:border-blue-400"
+                          taggingMode &&
+                            "hover:bg-blue-100 cursor-pointer border border-dashed border-transparent hover:border-blue-400",
                         )}
                         onClick={() => {
                           if (taggingMode) {
@@ -123,21 +148,21 @@ export default function App() {
                         }}
                       >
                         {word}
-                      </span>
-                      {' '}
+                      </span>{" "}
                     </React.Fragment>
                   ))}
                 </div>
-                <span className="text-xs font-mono text-slate-400">{r.ref_id}</span>
+                <span className="text-xs font-mono text-slate-400">
+                  {r.ref_id}
+                </span>
               </div>
 
               <div className="grid md:grid-cols-2 gap-4">
                 <div>
                   <div className="flex flex-wrap gap-x-2 font-bold text-slate-700 mb-1">
-                    {r.phonetic.split(' ').map((word, i) => (
+                    {r.phonetic.split(" ").map((word, i) => (
                       <React.Fragment key={i}>
-                        <span>{word}</span>
-                        {' '}
+                        <span>{word}</span>{" "}
                       </React.Fragment>
                     ))}
                   </div>
@@ -146,10 +171,12 @@ export default function App() {
                 <div className="flex items-center justify-end">
                   {r.audio ? (
                     <button className="btn bg-slate-100 hover:bg-slate-200 flex items-center gap-2">
-                       <Play size={16} fill="currentColor" /> Play Audio
+                      <Play size={16} fill="currentColor" /> Play Audio
                     </button>
                   ) : (
-                    <span className="text-sm text-slate-400 italic">No audio available</span>
+                    <span className="text-sm text-slate-400 italic">
+                      No audio available
+                    </span>
                   )}
                 </div>
               </div>
