@@ -48,3 +48,4 @@ wrapt==2.1.1
 flask
 black
 pre-commit
+genanki==0.13.0
