@@ -97,7 +97,7 @@ class SentenceTag(BaseModel):
         # User said "tag a word". A word could technically have multiple tags,
         # but usually UI allows one selection.
         # "select a word and tag it" -> suggests one tag per word.
-        # Let's verify requirement "2a. the tags for now should be 'converb,' 'yi+converb,' and 'incompletive deverbal'"
+        # Let's verify requirement "2a. the tags for now should be 'converb,' 'yi+converb,' 'incompletive deverbal,' and 'completive deverbal'"
         # A word likely won't be both "converb" and "incompletive deverbal".
         # Let's enforce unique (ref_id, word_index, tag) just in case, or (ref_id, word_index) to limit to 1.
         # Let's assume one tag per word for now to keep UI simple, but unique on triplet allows multiple.

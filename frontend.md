@@ -37,13 +37,15 @@
 ## 3. Tagging Functionality
 
 - **Location**: Results page (`/search`).
-- **Activation**: Toggle "Enable Tagging Mode" switch.
+- **Activation**: Toggle "Enable Tagging" button.
 - **Workflow**:
-  1.  User clicks a Cherokee word (token) in the results.
-  2.  Browser prompts for input: `1` (converb), `2` (yi+converb), `3` (incompletive deverbal), or text.
-  3.  **Save**: Sends POST to `/api/sentences/<ref_id>/tags` with `{word_index, tag}`.
-  4.  **UI Update**: Adds a small blue dot/badge to the tagged word.
-  5.  **Remove**: Submitting empty string in prompt sends DELETE to `/api/sentences/<ref_id>/tags`.
+  1.  User clicks a Cherokee word (token) in the results while Tagging Mode is ON.
+  2.  A **Tagging Drawer** appears from the bottom.
+  3.  User selects a tag from the list: `converb`, `yi+converb`, `incompletive deverbal`, or `completive deverbal`.
+  4.  Custom tags can also be entered.
+  5.  **Save**: Sends POST to `/api/sentences/<ref_id>/tags` with `{word_index, tag}`.
+  6.  **UI Update**: The tag appears directly below the word in the search results.
+  7.  **Remove**: Clicking "Remove Tag" in the drawer sends DELETE to `/api/sentences/<ref_id>/tags`.
 
 ## 4. Reading Integration (Notes)
 

@@ -20,6 +20,13 @@ const SUBCLAUSE_LABELS = {
   csubj: "Clausal Subject",
 };
 
+const AVAILABLE_TAGS = [
+  "converb",
+  "yi+converb",
+  "incompletive deverbal",
+  "completive deverbal",
+];
+
 export default function App() {
   const [query, setQuery] = useState("");
   const [results, setResults] = useState([]);
@@ -32,6 +39,7 @@ export default function App() {
     is_command: false,
     is_time_clause: false,
     subclause_types: [],
+    tag: "",
   });
 
   const performSearch = async (e) => {
@@ -47,6 +55,10 @@ export default function App() {
         is_command: filters.is_command ? "true" : "false",
         is_time_clause: filters.is_time_clause ? "true" : "false",
       });
+
+      if (filters.tag) {
+        params.append("tag", filters.tag);
+      }
 
       filters.subclause_types.forEach((t) =>
         params.append("subclause_types", t),
@@ -107,9 +119,14 @@ export default function App() {
           </button>
         </form>
 
-        <div className="flex flex-wrap justify-center gap-4 mt-6">
-          {["use_lemma", "is_hypothetical", "is_command", "is_time_clause"].map(
-            (f) => (
+        <div className="flex flex-wrap justify-center items-center gap-6 mt-6">
+          <div className="flex flex-wrap gap-4">
+            {[
+              "use_lemma",
+              "is_hypothetical",
+              "is_command",
+              "is_time_clause",
+            ].map((f) => (
               <label
                 key={f}
                 className="flex items-center gap-2 cursor-pointer select-none"
@@ -124,8 +141,30 @@ export default function App() {
                   {f.replace("is_", "").replace("_", " ")}
                 </span>
               </label>
-            ),
-          )}
+            ))}
+          </div>
+
+          <div className="h-6 w-px bg-slate-200 hidden sm:block"></div>
+
+          <div className="flex items-center gap-2">
+            <span className="text-sm font-bold text-slate-400 uppercase tracking-tight">
+              Filter by Tag:
+            </span>
+            <select
+              className="select text-sm py-1"
+              value={filters.tag}
+              onChange={(e) =>
+                setFilters((prev) => ({ ...prev, tag: e.target.value }))
+              }
+            >
+              <option value="">All Tags</option>
+              {AVAILABLE_TAGS.map((t) => (
+                <option key={t} value={t}>
+                  {t}
+                </option>
+              ))}
+            </select>
+          </div>
         </div>
       </header>
 

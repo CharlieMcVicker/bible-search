@@ -4,16 +4,10 @@ import clsx from "clsx";
 import { motion, AnimatePresence } from "framer-motion";
 
 const DEFAULT_TAGS = [
-  "Verb",
-  "Noun",
-  "Adjective",
-  "Adverb",
-  "Pronoun",
-  "Preposition",
-  "Conjunction",
-  "Interjection",
-  "Infinitive",
-  "Imperative",
+  "converb",
+  "yi+converb",
+  "incompletive deverbal",
+  "completive deverbal",
 ];
 
 export default function TaggingDrawer({
