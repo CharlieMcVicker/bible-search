@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
-import { useSearchParams } from "react-router-dom";
+import { useSearchParams, useNavigate } from "react-router-dom";
 import { Tag as TagIcon } from "lucide-react";
 import clsx from "clsx";
 import SearchForm from "../components/SearchForm";
@@ -11,6 +11,7 @@ const PAGE_SIZE = 10;
 
 export default function SearchPage() {
   const [searchParams, setSearchParams] = useSearchParams();
+  const navigate = useNavigate();
 
   const [results, setResults] = useState<SearchResult[]>([]);
   const [totalCount, setTotalCount] = useState(0);
@@ -163,6 +164,17 @@ export default function SearchPage() {
           >
             <TagIcon size={18} />
             {taggingMode ? "Tagging Mode: ON" : "Enable Tagging"}
+          </button>
+          <button
+            onClick={() => {
+              const params = new URLSearchParams(searchParams);
+              navigate(`/tag?${params.toString()}`);
+            }}
+            className="btn bg-slate-100 flex items-center gap-2"
+            style={{ marginLeft: "0.5rem" }}
+          >
+            <TagIcon size={18} />
+            Tagging Workflow
           </button>
         </div>
 

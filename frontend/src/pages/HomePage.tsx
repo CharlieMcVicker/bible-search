@@ -1,5 +1,6 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
+import { Tag } from "lucide-react";
 import SearchForm from "../components/SearchForm";
 import { Filters } from "../types";
 
@@ -46,6 +47,21 @@ export default function HomePage() {
           Explore the Cherokee language through a searchable corpus of
           sentences. Find specific grammatical structures, vocabulary, and more.
         </p>
+      </div>
+
+      <div className="text-center mt-6">
+        <Link
+          to="/tag"
+          className="btn btn-primary flex items-center gap-2"
+          style={{
+            display: "inline-flex",
+            padding: "0.75rem 1.5rem",
+            fontSize: "1rem",
+          }}
+        >
+          <Tag size={20} />
+          Tagging Mode
+        </Link>
       </div>
     </div>
   );
