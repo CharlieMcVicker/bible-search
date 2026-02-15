@@ -106,24 +106,26 @@ export default function App() {
           {results.map((r) => (
             <div key={r.ref_id} className="card">
               <div className="flex justify-between mb-4">
-                <div className="flex flex-wrap gap-2 text-2xl font-medium text-blue-700">
+                <div className="flex flex-wrap gap-x-2 gap-y-1 text-2xl font-medium text-blue-700">
                   {r.syllabary.split(' ').map((word, i) => (
-                    <span
-                      key={i}
-                      className={clsx(
-                        "rounded px-1 transition-colors",
-                        taggingMode && "hover:bg-blue-100 cursor-pointer border border-dashed border-transparent hover:border-blue-400"
-                      )}
-                      onClick={() => {
-                        if (taggingMode) {
-                          const tag = prompt(`Tag "${word}" in ${r.ref_id}:`);
-                          // To be implemented: API call
-                          console.log(tag);
-                        }
-                      }}
-                    >
-                      {word}
-                    </span>
+                    <React.Fragment key={i}>
+                      <span
+                        className={clsx(
+                          "rounded px-1 transition-colors",
+                          taggingMode && "hover:bg-blue-100 cursor-pointer border border-dashed border-transparent hover:border-blue-400"
+                        )}
+                        onClick={() => {
+                          if (taggingMode) {
+                            const tag = prompt(`Tag "${word}" in ${r.ref_id}:`);
+                            // To be implemented: API call
+                            console.log(tag);
+                          }
+                        }}
+                      >
+                        {word}
+                      </span>
+                      {' '}
+                    </React.Fragment>
                   ))}
                 </div>
                 <span className="text-xs font-mono text-slate-400">{r.ref_id}</span>
@@ -131,7 +133,14 @@ export default function App() {
 
               <div className="grid md:grid-cols-2 gap-4">
                 <div>
-                  <p className="font-bold text-slate-700 mb-1">{r.phonetic}</p>
+                  <div className="flex flex-wrap gap-x-2 font-bold text-slate-700 mb-1">
+                    {r.phonetic.split(' ').map((word, i) => (
+                      <React.Fragment key={i}>
+                        <span>{word}</span>
+                        {' '}
+                      </React.Fragment>
+                    ))}
+                  </div>
                   <p className="text-slate-600">{r.english}</p>
                 </div>
                 <div className="flex items-center justify-end">
