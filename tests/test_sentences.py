@@ -58,28 +58,28 @@ def searcher(test_db_session):
 
 
 def test_basic_search(searcher):
-    results = searcher.search("cat")
+    results, _ = searcher.search("cat")
     assert len(results) == 1
     assert results[0].ref_id == "3"
 
 
 def test_hypothetical_filter(searcher):
-    results = searcher.search("inside", is_hypothetical=True)
+    results, _ = searcher.search("inside", is_hypothetical=True)
     assert len(results) == 1
     assert results[0].ref_id == "1"
 
-    results = searcher.search("inside", is_hypothetical=False)
+    results, _ = searcher.search("inside", is_hypothetical=False)
     assert len(results) == 0
 
 
 def test_command_filter(searcher):
-    results = searcher.search("book", is_command=True)
+    results, _ = searcher.search("book", is_command=True)
     assert len(results) == 1
     assert results[0].ref_id == "2"
 
 
 def test_lemma_search(searcher):
     # "rains" matches "rain" in lemma
-    results = searcher.search("rain", use_lemma=True)
+    results, _ = searcher.search("rain", use_lemma=True)
     assert len(results) == 1
     assert "rains" in results[0].english

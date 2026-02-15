@@ -56,6 +56,7 @@ def search_sentences():
             "is_time_clause",
             "tag",
             "subclause_types",
+            "untagged_only",
         ]
     )
 
@@ -76,13 +77,14 @@ def search_sentences():
         is_time_clause = request.args.get("is_time_clause")
         if is_time_clause is not None:
             is_time_clause = is_time_clause.lower() == "true"
+        untagged_only = request.args.get("untagged_only", "false").lower() == "true"
         tag_filter = request.args.get("tag")
         subclause_types = request.args.getlist("subclause_types")
     except ValueError:
         abort(400, description="Invalid limit or offset")
 
     start_time = time.time()
-    results = searcher.search(
+    results, total_count = searcher.search(
         query,
         limit=limit,
         offset=offset,
@@ -92,6 +94,7 @@ def search_sentences():
         is_hypothetical=is_hypothetical,
         is_time_clause=is_time_clause,
         tag_filter=tag_filter,
+        untagged_only=untagged_only,
         subclause_types=subclause_types or None,
     )
     duration = time.time() - start_time
@@ -112,6 +115,7 @@ def search_sentences():
             ],
             "meta": {
                 "count": len(results),
+                "total": total_count,
                 "execution_time": duration,
             },
         }

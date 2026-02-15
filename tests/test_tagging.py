@@ -70,7 +70,7 @@ def client(test_db):
 
 def test_time_clause_filter(searcher):
     # Should find 'when' and 'after' sentences, but not 'because'
-    results = searcher.search("", is_time_clause=True)
+    results, _ = searcher.search("", is_time_clause=True)
     ids = {r.ref_id for r in results}
     assert "time1" in ids
     assert "time2" in ids
@@ -92,7 +92,7 @@ def test_tag_and_filter(searcher, client):
     assert tag.tag == "converb"
 
     # Search by tag
-    results = searcher.search("", tag_filter="converb")
+    results, _ = searcher.search("", tag_filter="converb")
     assert len(results) == 1
     assert results[0].ref_id == ref_id
 
@@ -130,3 +130,26 @@ def test_api_search_with_filters(client):
     # Ensure tags field is present in each item
     for item in data["data"]:
         assert "tags" in item
+
+
+def test_untagged_only_filter(searcher, client):
+    # Setup: Tag one sentence
+    client.post(f"/api/sentences/time1/tags", json={"word_index": 0, "tag": "converb"})
+
+    # Search untagged only
+    results, total = searcher.search("", untagged_only=True)
+    ids = {r.ref_id for r in results}
+
+    assert "time1" not in ids
+    assert "time2" in ids
+    assert "nontime1" in ids
+    assert "plain1" in ids
+    assert total == 3
+
+    # Direct search on API
+    res = client.get("/api/search?q=&untagged_only=true")
+    assert res.status_code == 200
+    data = res.get_json()
+    assert data["meta"]["total"] == 3
+    api_ids = {r["ref_id"] for r in data["data"]}
+    assert "time1" not in api_ids

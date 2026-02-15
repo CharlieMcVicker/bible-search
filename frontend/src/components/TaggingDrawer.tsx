@@ -6,6 +6,7 @@ import { motion, AnimatePresence } from "framer-motion";
 const DEFAULT_TAGS = [
   "converb",
   "yi+converb",
+  "yi+present",
   "incompletive deverbal",
   "completive deverbal",
 ];

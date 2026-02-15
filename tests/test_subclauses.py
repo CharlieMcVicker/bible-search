@@ -79,21 +79,21 @@ def searcher(test_db_session):
 
 def test_subclause_filter_single(searcher):
     # Search for adverbial clauses
-    results = searcher.search("stretched", subclause_types=["advcl"])
+    results, _ = searcher.search("stretched", subclause_types=["advcl"])
     assert len(results) == 1
     assert results[0].ref_id == "1"
 
 
 def test_subclause_filter_multiple(searcher):
     # Search for sentences with either relcl or ccomp
-    results = searcher.search("he", subclause_types=["relcl", "ccomp"])
+    results, _ = searcher.search("he", subclause_types=["relcl", "ccomp"])
     # "He said that..." (ccomp) - matches "he"
     # "The boy who is playing ball is my friend." (relcl) - no "he"
     # Wait, "The boy..." doesn't match "he".
     # Let's search for something that might be in both or just verify count.
 
     # Just check that it returns the right nodes
-    results = searcher.search("", subclause_types=["relcl", "ccomp"])
+    results, _ = searcher.search("", subclause_types=["relcl", "ccomp"])
     assert len(results) == 2
     ids = {r.ref_id for r in results}
     assert "2" in ids
@@ -101,20 +101,20 @@ def test_subclause_filter_multiple(searcher):
 
 
 def test_subclause_filter_any(searcher):
-    results = searcher.search("", subclause_types=["any"])
+    results, _ = searcher.search("", subclause_types=["any"])
     assert len(results) == 4  # 1, 2, 3, 5
     assert "4" not in {r.ref_id for r in results}
 
 
 def test_subclause_filter_none(searcher):
-    results = searcher.search("", subclause_types=["none"])
+    results, _ = searcher.search("", subclause_types=["none"])
     assert len(results) == 1
     assert results[0].ref_id == "4"
 
 
 def test_subclause_filter_complex(searcher):
     # Multiple types including 'any' (though redundant)
-    results = searcher.search("", subclause_types=["advcl", "relcl"])
+    results, _ = searcher.search("", subclause_types=["advcl", "relcl"])
     assert len(results) == 3  # 1, 3, 5
     ids = {r.ref_id for r in results}
     assert "1" in ids

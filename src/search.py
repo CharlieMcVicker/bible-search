@@ -37,6 +37,7 @@ class SearchEngine:
         subclause_types=None,
         is_time_clause=None,
         tag_filter=None,
+        untagged_only=False,
     ):
         """
         Performs a full-text search on sentences using BM25 ranking.
@@ -78,6 +79,11 @@ class SearchEngine:
             q = q.where(Sentence.is_command == is_command)
         if is_hypothetical is not None:
             q = q.where(Sentence.is_hypothetical == is_hypothetical)
+
+        if untagged_only:
+            # Subquery to find all ref_ids that ARE tagged
+            tagged_ref_ids = SentenceTag.select(SentenceTag.ref_id)
+            q = q.where(Sentence.ref_id.not_in(tagged_ref_ids))
 
         if subclause_types:
             if isinstance(subclause_types, str):
@@ -125,6 +131,9 @@ class SearchEngine:
                 .where(SentenceTag.tag == tag_filter)
                 .distinct()
             )
+        elif untagged_only:
+            subquery = SentenceTag.select(SentenceTag.ref_id)
+            q = q.where(Sentence.ref_id.not_in(subquery))
         if sort == "length_asc":
             q = q.order_by(fn.length(Sentence.syllabary))
         elif sort == "length_desc":
@@ -134,6 +143,7 @@ class SearchEngine:
         else:
             q = q.order_by(Sentence.ref_id)
 
+        total_count = q.count()
         results = list(q.limit(limit).offset(offset))
 
         # Attach tags to results
@@ -151,4 +161,4 @@ class SearchEngine:
             for r in results:
                 r.tags = tag_map.get(r.ref_id, [])
 
-        return results
+        return results, total_count

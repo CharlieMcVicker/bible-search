@@ -9,6 +9,7 @@ export interface SearchResult {
   phonetic: string;
   english: string;
   audio?: string;
+  lemma?: string;
   tags?: Tag[];
 }
 
@@ -17,6 +18,7 @@ export interface Filters {
   is_hypothetical: boolean;
   is_command: boolean;
   is_time_clause: boolean;
+  untagged_only: boolean;
   subclause_types: string[];
   tag: string;
 }
