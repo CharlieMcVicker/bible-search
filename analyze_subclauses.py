@@ -1,7 +1,8 @@
 import json
 import os
-import spacy
 from collections import Counter
+
+import spacy
 
 DATA_FILE = os.path.join("data", "sentences.json")
 

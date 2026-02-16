@@ -1,8 +1,10 @@
 import json
 import os
+
 import spacy
 from peewee import SqliteDatabase
-from src.models import db, Sentence, SentenceIndex
+
+from src.models import Sentence, SentenceIndex, db
 
 DATA_FILE = os.path.join("data", "sentences.json")
 DB_FILE = "bible.db"

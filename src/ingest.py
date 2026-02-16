@@ -1,8 +1,10 @@
-import os
 import json
+import os
+
 import spacy
 from peewee import SqliteDatabase, fn
-from src.models import db, Book, Chapter, Verse, VerseIndex, Entity, VerseEntity
+
+from src.models import Book, Chapter, Entity, Verse, VerseEntity, VerseIndex, db
 
 DATA_DIR = "data"
 FULL_DATA_FILE = os.path.join(DATA_DIR, "kjv_full.json")

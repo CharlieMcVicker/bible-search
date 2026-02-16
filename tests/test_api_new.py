@@ -1,8 +1,10 @@
-import pytest
 import os
-from src.app import app
-from src.models import db, Sentence, SentenceIndex, SentenceTag
+
+import pytest
 from peewee import SqliteDatabase
+
+from src.app import app
+from src.models import Sentence, SentenceIndex, SentenceTag, db
 
 
 @pytest.fixture

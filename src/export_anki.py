@@ -1,5 +1,6 @@
-import genanki
 import os
+
+import genanki
 
 from src.models import Sentence, SentenceTag, init_db
 

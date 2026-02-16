@@ -1,7 +1,9 @@
-import pytest
 import os
+
+import pytest
 from peewee import SqliteDatabase
-from src.models import db, Sentence, SentenceIndex, SentenceTag
+
+from src.models import Sentence, SentenceIndex, SentenceTag, db
 from src.search import SearchEngine
 
 

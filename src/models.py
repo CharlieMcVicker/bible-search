@@ -1,5 +1,5 @@
 from peewee import *
-from playhouse.sqlite_ext import FTS5Model, SearchField, RowIDField, JSONField
+from playhouse.sqlite_ext import FTS5Model, JSONField, RowIDField, SearchField
 
 # Proxy for late initialization
 db = DatabaseProxy()

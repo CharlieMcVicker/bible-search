@@ -1,6 +1,7 @@
 import spacy
 from peewee import fn
-from src.models import db, Sentence, SentenceIndex, SentenceTag
+
+from src.models import Sentence, SentenceIndex, SentenceTag, db
 
 
 class SearchEngine:
@@ -100,7 +101,7 @@ class SearchEngine:
                     clause_filters.append(Sentence.subclause_types.contains(stype))
 
             if clause_filters:
-                from peewee import reduce, operator
+                from peewee import operator, reduce
 
                 q = q.where(reduce(operator.or_, clause_filters))
 
@@ -120,7 +121,7 @@ class SearchEngine:
                 "as soon as",
             ]
             # Peewee OR for keywords
-            from peewee import reduce, operator
+            from peewee import operator, reduce
 
             keyword_filters = [Sentence.english.contains(kw) for kw in time_keywords]
             q = q.where(reduce(operator.or_, keyword_filters))

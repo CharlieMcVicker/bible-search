@@ -1,6 +1,8 @@
-import spacy
 from collections import Counter
-from src.models import Verse, db, SqliteDatabase, VerbStat
+
+import spacy
+
+from src.models import SqliteDatabase, VerbStat, Verse, db
 
 
 def analyze_hypothetical_verbs():

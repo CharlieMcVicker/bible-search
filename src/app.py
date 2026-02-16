@@ -1,18 +1,20 @@
+import os
+import time
+
 from flask import (
     Flask,
-    jsonify,
-    request,
     abort,
-    render_template,
+    jsonify,
     redirect,
-    url_for,
+    render_template,
+    request,
     send_from_directory,
+    url_for,
 )
 from peewee import SqliteDatabase
-from src.models import db, Sentence, SentenceTag, TaggingGroup
+
+from src.models import Sentence, SentenceTag, TaggingGroup, db
 from src.search import SearchEngine
-import time
-import os
 
 app = Flask(__name__, static_folder="../frontend/dist", static_url_path="/")
 

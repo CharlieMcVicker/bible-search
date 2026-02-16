@@ -1,10 +1,12 @@
-import pytest
-import os
 import json
+import os
+
+import pytest
 from peewee import SqliteDatabase
-from src.models import db, Sentence, SentenceIndex, SentenceTag
-from src.search import SearchEngine
+
 from src.app import app
+from src.models import Sentence, SentenceIndex, SentenceTag, db
+from src.search import SearchEngine
 
 
 @pytest.fixture
