@@ -1,5 +1,5 @@
 from peewee import *
-from playhouse.sqlite_ext import FTS5Model, SearchField, RowIDField
+from playhouse.sqlite_ext import FTS5Model, SearchField, RowIDField, JSONField
 
 # Proxy for late initialization
 db = DatabaseProxy()
@@ -108,6 +108,22 @@ class SentenceTag(BaseModel):
         indexes = ((("ref_id", "word_index"), True),)
 
 
+class SentenceGroup(BaseModel):
+    ref_id = CharField()
+    group_name = CharField()
+
+    class Meta:
+        # Unique on both columns, and fast retrieval by group_name
+        indexes = ((("group_name", "ref_id"), True),)
+
+
+class TaggingGroup(BaseModel):
+    ref_id = CharField(unique=True)
+    name = CharField()
+    tags = JSONField()
+    query = JSONField()
+
+
 class SentenceIndex(FTS5Model):
     rowid = RowIDField()
     english = SearchField()
@@ -135,6 +151,8 @@ def init_db(db_path="bible.db"):
             Sentence,
             SentenceIndex,
             SentenceTag,
+            SentenceGroup,
+            TaggingGroup,
         ]
     )
     db.close()
