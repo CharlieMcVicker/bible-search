@@ -31,6 +31,7 @@ class Verse(BaseModel):
     lemma_text = TextField(null=True)  # Lemmatized version of text
     is_command = BooleanField(default=False)
     is_hypothetical = BooleanField(default=False)
+    is_inability = BooleanField(default=False)
 
     class Meta:
         # Ensuring (chapter, number) is unique
@@ -82,6 +83,7 @@ class Sentence(BaseModel):
     lemma_text = TextField(null=True)
     is_command = BooleanField(default=False)
     is_hypothetical = BooleanField(default=False)
+    is_inability = BooleanField(default=False)
     subclause_types = CharField(
         null=True
     )  # Comma-separated list of subclause types (dep labels)

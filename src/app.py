@@ -55,6 +55,7 @@ def search_sentences():
         for k in [
             "is_command",
             "is_hypothetical",
+            "is_inability",
             "is_time_clause",
             "tag",
             "subclause_types",
@@ -76,6 +77,9 @@ def search_sentences():
         is_hypothetical = request.args.get("is_hypothetical")
         if is_hypothetical is not None:
             is_hypothetical = is_hypothetical.lower() == "true"
+        is_inability = request.args.get("is_inability")
+        if is_inability is not None:
+            is_inability = is_inability.lower() == "true"
         is_time_clause = request.args.get("is_time_clause")
         if is_time_clause is not None:
             is_time_clause = is_time_clause.lower() == "true"
@@ -94,6 +98,7 @@ def search_sentences():
         sort=sort,
         is_command=is_command,
         is_hypothetical=is_hypothetical,
+        is_inability=is_inability,
         is_time_clause=is_time_clause,
         tag_filter=tag_filter,
         untagged_only=untagged_only,

@@ -68,6 +68,7 @@ export default function SearchForm({
               "use_lemma",
               "is_hypothetical",
               "is_command",
+              "is_inability",
               "is_time_clause",
               "untagged_only",
             ] as const

@@ -64,6 +64,31 @@ def ingest_data():
                 if next_token and next_token.lower_ in {"shalt", "shall"}:
                     verse.is_command = True
 
+        # Inability detection using lemmas
+        lemmas = [t.lemma_.lower() for t in doc]
+        if "unable" in lemmas:
+            verse.is_inability = True
+        else:
+            for i, lemma in enumerate(lemmas):
+                if lemma == "not":
+                    # Check previous for "can" or "could"
+                    if i > 0 and lemmas[i - 1] in {"can", "could"}:
+                        verse.is_inability = True
+                        break
+                    # Check for "not able" or "not be able"
+                    remaining = lemmas[i + 1 :]
+                    if remaining:
+                        if remaining[0] == "able":
+                            verse.is_inability = True
+                            break
+                        if (
+                            len(remaining) > 1
+                            and remaining[0] == "be"
+                            and remaining[1] == "able"
+                        ):
+                            verse.is_inability = True
+                            break
+
         verse.save()
 
         # Entities

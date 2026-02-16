@@ -18,6 +18,7 @@ export interface Filters {
   use_lemma: boolean;
   is_hypothetical: boolean;
   is_command: boolean;
+  is_inability: boolean;
   is_time_clause: boolean;
   untagged_only: boolean;
   subclause_types: string[];

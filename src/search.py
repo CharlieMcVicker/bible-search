@@ -35,6 +35,7 @@ class SearchEngine:
         sort=None,
         is_command=None,
         is_hypothetical=None,
+        is_inability=None,
         subclause_types=None,
         is_time_clause=None,
         tag_filter=None,
@@ -76,10 +77,12 @@ class SearchEngine:
             q = Sentence.select(Sentence, Value(0).alias("score"))
 
         # Apply filters
-        if is_command is not None:
-            q = q.where(Sentence.is_command == is_command)
-        if is_hypothetical is not None:
-            q = q.where(Sentence.is_hypothetical == is_hypothetical)
+        if is_command:
+            q = q.where(Sentence.is_command == True)
+        if is_hypothetical:
+            q = q.where(Sentence.is_hypothetical == True)
+        if is_inability:
+            q = q.where(Sentence.is_inability == True)
 
         if untagged_only:
             # Subquery to find all ref_ids that ARE tagged
@@ -102,8 +105,6 @@ class SearchEngine:
 
             if clause_filters:
                 from peewee import operator, reduce
-
-                q = q.where(reduce(operator.or_, clause_filters))
 
                 q = q.where(reduce(operator.or_, clause_filters))
 

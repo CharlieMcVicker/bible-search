@@ -11,6 +11,7 @@ export default function HomePage() {
     use_lemma: false,
     is_hypothetical: false,
     is_command: false,
+    is_inability: false,
     is_time_clause: false,
     untagged_only: false,
     subclause_types: [],
@@ -23,6 +24,7 @@ export default function HomePage() {
     if (filters.use_lemma) params.set("use_lemma", "true");
     if (filters.is_hypothetical) params.set("is_hypothetical", "true");
     if (filters.is_command) params.set("is_command", "true");
+    if (filters.is_inability) params.set("is_inability", "true");
     if (filters.is_time_clause) params.set("is_time_clause", "true");
     if (filters.untagged_only) params.set("untagged_only", "true");
     if (filters.tag) params.set("tag", filters.tag);

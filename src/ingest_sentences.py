@@ -113,6 +113,32 @@ def ingest_sentences():
                 ",".join(sorted(list(found_subclauses))) if found_subclauses else None
             )
 
+            is_inability = False
+            # Inability detection using lemmas
+            lemmas = [t.lemma_.lower() for t in doc]
+            if "unable" in lemmas:
+                is_inability = True
+            else:
+                for i, lemma in enumerate(lemmas):
+                    if lemma == "not":
+                        # Check previous for "can" or "could"
+                        if i > 0 and lemmas[i - 1] in {"can", "could"}:
+                            is_inability = True
+                            break
+                        # Check for "not able" or "not be able"
+                        remaining = lemmas[i + 1 :]
+                        if remaining:
+                            if remaining[0] == "able":
+                                is_inability = True
+                                break
+                            if (
+                                len(remaining) > 1
+                                and remaining[0] == "be"
+                                and remaining[1] == "able"
+                            ):
+                                is_inability = True
+                                break
+
             batch.append(
                 {
                     "ref_id": ref_id,
@@ -123,6 +149,7 @@ def ingest_sentences():
                     "lemma_text": lemma_text,
                     "is_hypothetical": is_hypothetical,
                     "is_command": is_command,
+                    "is_inability": is_inability,
                     "subclause_types": subclause_types,
                 }
             )

@@ -58,6 +58,7 @@ export default function TaggingPage() {
     use_lemma: searchParams.get("use_lemma") === "true",
     is_hypothetical: searchParams.get("is_hypothetical") === "true",
     is_command: searchParams.get("is_command") === "true",
+    is_inability: searchParams.get("is_inability") === "true",
     is_time_clause: searchParams.get("is_time_clause") === "true",
     untagged_only: true, // Always forced
     subclause_types: searchParams.getAll("subclause_types"),
@@ -70,6 +71,7 @@ export default function TaggingPage() {
     if (newFilters.use_lemma) params.set("use_lemma", "true");
     if (newFilters.is_hypothetical) params.set("is_hypothetical", "true");
     if (newFilters.is_command) params.set("is_command", "true");
+    if (newFilters.is_inability) params.set("is_inability", "true");
     if (newFilters.is_time_clause) params.set("is_time_clause", "true");
     if (newFilters.tag) params.set("tag", newFilters.tag);
     newFilters.subclause_types.forEach((t) =>
@@ -89,6 +91,7 @@ export default function TaggingPage() {
         use_lemma: String(filters.use_lemma),
         is_hypothetical: String(filters.is_hypothetical),
         is_command: String(filters.is_command),
+        is_inability: String(filters.is_inability),
         is_time_clause: String(filters.is_time_clause),
         untagged_only: "true",
       });
@@ -138,6 +141,7 @@ export default function TaggingPage() {
       query ||
       filters.is_command ||
       filters.is_hypothetical ||
+      filters.is_inability ||
       filters.is_time_clause ||
       filters.tag ||
       filters.subclause_types.length > 0;

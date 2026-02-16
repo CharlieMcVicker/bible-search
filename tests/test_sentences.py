@@ -70,8 +70,9 @@ def test_hypothetical_filter(searcher):
     assert len(results) == 1
     assert results[0].ref_id == "1"
 
+    # Lenient filtering: False means "don't filter", so it should still find it
     results, _ = searcher.search("inside", is_hypothetical=False)
-    assert len(results) == 0
+    assert len(results) == 1
 
 
 def test_command_filter(searcher):
