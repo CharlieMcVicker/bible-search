@@ -1,4 +1,5 @@
 import genanki
+import os
 
 from src.models import Sentence, SentenceTag, init_db
 
@@ -59,12 +60,13 @@ def generate_anki_deck(output_filename="Cherokee_Sentences.apkg"):
             {"name": "Text"},
             {"name": "English"},
             {"name": "Tag"},
+            {"name": "Audio"},
         ],
         templates=[
             {
                 "name": "Card 1",
                 "qfmt": '{{cloze:Text}}<br><br><div style="font-size: 0.8em;">{{English}}</div><br><br><span style="font-size:small">{{Tag}}</span>',
-                "afmt": '{{cloze:Text}}<br><br><div style="font-size: 0.8em;">{{English}}</div><br><br><span style="font-size:small">{{Tag}}</span>',
+                "afmt": '{{cloze:Text}}<br><br><div style="font-size: 0.8em;">{{English}}</div><br><br><span style="font-size:small">{{Tag}}</span><br><br>{{Audio}}',
             },
         ],
         css="""
@@ -86,6 +88,8 @@ def generate_anki_deck(output_filename="Cherokee_Sentences.apkg"):
     )
 
     deck = genanki.Deck(DECK_ID, "Cherokee Sentences")
+    media_files = []
+    audio_dir = os.path.join("data", "sentence-audio")
 
     for ref_id in valid_ref_ids:
         if ref_id not in sentences_map:
@@ -141,9 +145,18 @@ def generate_anki_deck(output_filename="Cherokee_Sentences.apkg"):
                 f"<div class='phonetic' style='color: #666;'>{phonetic_str}</div>"
             )
 
+        audio_field = ""
+        if sentence.audio:
+            audio_path = os.path.join(audio_dir, sentence.audio)
+            if os.path.exists(audio_path):
+                audio_field = f"[sound:{sentence.audio}]"
+                media_files.append(audio_path)
+            else:
+                print(f"Warning: Audio file not found: {audio_path}")
+
         note = genanki.Note(
             model=model,
-            fields=[combined_text, sentence.english, tag_label],
+            fields=[combined_text, sentence.english, tag_label, audio_field],
             tags=[
                 tag_label.replace(" ", "_")
             ],  # Anki tags usually shouldn't have spaces
@@ -151,8 +164,13 @@ def generate_anki_deck(output_filename="Cherokee_Sentences.apkg"):
         deck.add_note(note)
 
     # Save
-    genanki.Package(deck).write_to_file(output_filename)
-    print(f"Generated deck with {len(deck.notes)} notes: {output_filename}")
+    # Save
+    package = genanki.Package(deck)
+    package.media_files = media_files
+    package.write_to_file(output_filename)
+    print(
+        f"Generated deck with {len(deck.notes)} notes and {len(media_files)} audio files: {output_filename}"
+    )
 
 
 if __name__ == "__main__":
