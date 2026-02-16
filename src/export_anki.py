@@ -8,7 +8,7 @@ DECK_ID = 2059300110  # Unique ID for this deck
 MODEL_ID = 1607392322  # Unique ID for the note type
 
 
-def generate_anki_deck(output_filename="Cherokee_Sentences.apkg"):
+def generate_anki_deck(output_filename="time_clauses.apkg"):
     # Initialize DB
     init_db("bible.db")
 
