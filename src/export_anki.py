@@ -1,3 +1,4 @@
+import json
 import os
 
 import genanki
@@ -9,7 +10,9 @@ DECK_ID = 2059300110  # Unique ID for this deck
 MODEL_ID = 1607392322  # Unique ID for the note type
 
 
-def generate_anki_deck(output_filename="time_clauses.apkg"):
+def generate_anki_deck(
+    output_filename="time_clauses.apkg", json_filename="anki_cards.json"
+):
     # Initialize DB
     init_db("bible.db")
 
@@ -90,6 +93,7 @@ def generate_anki_deck(output_filename="time_clauses.apkg"):
 
     deck = genanki.Deck(DECK_ID, "Cherokee Sentences")
     media_files = []
+    card_export_data = []
     audio_dir = os.path.join("data", "sentence-audio")
 
     for ref_id in valid_ref_ids:
@@ -164,6 +168,19 @@ def generate_anki_deck(output_filename="time_clauses.apkg"):
         )
         deck.add_note(note)
 
+        card_export_data.append(
+            {
+                "ref_id": ref_id,
+                "fields": {
+                    "Text": combined_text,
+                    "English": sentence.english,
+                    "Tag": tag_label,
+                    "Audio": audio_field,
+                },
+                "tags": [tag_label.replace(" ", "_")],
+            }
+        )
+
     # Save
     # Save
     package = genanki.Package(deck)
@@ -172,6 +189,10 @@ def generate_anki_deck(output_filename="time_clauses.apkg"):
     print(
         f"Generated deck with {len(deck.notes)} notes and {len(media_files)} audio files: {output_filename}"
     )
+
+    with open(json_filename, "w", encoding="utf-8") as f:
+        json.dump(card_export_data, f, indent=2, ensure_ascii=False)
+    print(f"Exported card data to {json_filename}")
 
 
 if __name__ == "__main__":
