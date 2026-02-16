@@ -51,6 +51,8 @@ def ingest_sentences():
         # Clear existing? Maybe. Or just upsert.
         # Let's clear for now to be clean, user said "only use the new source going forward"
         # but we are keeping Bible tables. We should clear Sentence table.
+        from src.models import SentenceTag
+
         Sentence.delete().execute()
 
         for item in data:
@@ -64,81 +66,20 @@ def ingest_sentences():
             doc = nlp(english)
             lemma_text = " ".join([token.lemma_ for token in doc])
 
-            is_hypothetical = False
-            # Hypothetical detection
-            conditional_keywords = {"if", "unless", "except"}
-            if any(token.lower_ in conditional_keywords for token in doc):
-                is_hypothetical = True
-            elif any(token.lower_ in {"would", "should"} for token in doc):
-                is_hypothetical = True
-
-            is_command = False
-            # Command detection
-            first_token = None
-            for token in doc:
-                if not token.is_punct and not token.is_space:
-                    first_token = token
-                    break
-
-            if first_token:
-                if first_token.pos_ == "VERB" and (
-                    first_token.dep_ == "ROOT" or first_token.dep_ == "advcl"
-                ):
-                    is_command = True
-                # "Thou shalt" / "Ye shall" - though less common in general sentences,
-                # keep for consistency with Verse logic if applicable
-                if first_token.lower_ in {"thou", "ye", "you"}:
-                    next_token = (
-                        doc[first_token.i + 1] if first_token.i + 1 < len(doc) else None
-                    )
-                    if next_token and next_token.lower_ in {"shalt", "shall"}:
-                        is_command = True
-
-            # Subclause detection
-            found_subclauses = set()
-            interesting_deps = {
-                "advcl",
-                "relcl",
-                "ccomp",
-                "xcomp",
-                "acl",
-                "csubj",
-                "csubjpass",
-            }
-            for token in doc:
-                if token.dep_ in interesting_deps:
-                    found_subclauses.add(token.dep_)
-
-            subclause_types = (
-                ",".join(sorted(list(found_subclauses))) if found_subclauses else None
+            from src.nlp import (
+                get_subclause_types,
+                is_command,
+                is_hypothetical,
+                is_inability,
             )
 
-            is_inability = False
-            # Inability detection using lemmas
-            lemmas = [t.lemma_.lower() for t in doc]
-            if "unable" in lemmas:
-                is_inability = True
-            else:
-                for i, lemma in enumerate(lemmas):
-                    if lemma == "not":
-                        # Check previous for "can" or "could"
-                        if i > 0 and lemmas[i - 1] in {"can", "could"}:
-                            is_inability = True
-                            break
-                        # Check for "not able" or "not be able"
-                        remaining = lemmas[i + 1 :]
-                        if remaining:
-                            if remaining[0] == "able":
-                                is_inability = True
-                                break
-                            if (
-                                len(remaining) > 1
-                                and remaining[0] == "be"
-                                and remaining[1] == "able"
-                            ):
-                                is_inability = True
-                                break
+            is_hypothetical = is_hypothetical(doc)
+            is_command = is_command(doc)
+            is_inability = is_inability(doc)
+            subclause_list = get_subclause_types(doc)
+            subclause_types = ",".join(subclause_list) if subclause_list else None
 
+            # Prepare sentence record
             batch.append(
                 {
                     "ref_id": ref_id,

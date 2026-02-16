@@ -229,6 +229,91 @@ def extract_bible_references(text, nlp=None):
     return references
 
 
+def is_command(doc: spacy.tokens.Doc) -> bool:
+    """
+    Detects if a sentence is an imperative command.
+    Heuristic: ROOT verb/aux in base form (VB) or present tense (VBP) with no explicit subject.
+    """
+    for token in doc:
+        # Imperatives are typically ROOTs
+        if token.dep_ == "ROOT":
+            # Direct imperatives: "Go", "Eat"
+            if token.pos_ == "VERB" and token.tag_ in ("VB", "VBP"):
+                # Check for explicit subjects among children
+                has_subject = any(
+                    t.dep_ in ("nsubj", "nsubjpass", "csubj", "csubjpass")
+                    for t in token.children
+                )
+                if not has_subject:
+                    return True
+            # Negative imperatives: "Don't go"
+            # In "Don't go", 'do' might be ROOT (AUX, VBP)
+            if token.pos_ == "AUX" and token.tag_ == "VBP":
+                if any(t.dep_ == "neg" for t in token.children):
+                    has_subject = any(
+                        t.dep_ in ("nsubj", "nsubjpass", "csubj", "csubjpass")
+                        for t in token.children
+                    )
+                    if not has_subject:
+                        return True
+    return False
+
+
+def is_hypothetical(doc: spacy.tokens.Doc) -> bool:
+    """
+    Detects if a sentence is hypothetical.
+    """
+    conditional_keywords = {"if", "unless", "except"}
+    if any(token.lower_ in conditional_keywords for token in doc):
+        return True
+    if any(token.lower_ in {"would", "should"} for token in doc):
+        return True
+    return False
+
+
+def is_inability(doc: spacy.tokens.Doc) -> bool:
+    """
+    Detects if a sentence expresses inability.
+    """
+    lemmas = [t.lemma_.lower() for t in doc]
+    if "unable" in lemmas:
+        return True
+    for i, lemma in enumerate(lemmas):
+        if lemma == "not":
+            # Check previous for "can" or "could"
+            if i > 0 and lemmas[i - 1] in {"can", "could"}:
+                return True
+            # Check for "not able" or "not be able"
+            remaining = lemmas[i + 1 :]
+            if remaining:
+                if remaining[0] == "able":
+                    return True
+                if (
+                    len(remaining) > 1
+                    and remaining[0] == "be"
+                    and remaining[1] == "able"
+                ):
+                    return True
+    return False
+
+
+def get_subclause_types(doc: spacy.tokens.Doc) -> list[str]:
+    """
+    Extracts dependency labels for subclauses found in the sentence.
+    """
+    interesting_deps = {
+        "advcl",
+        "relcl",
+        "ccomp",
+        "xcomp",
+        "acl",
+        "csubj",
+        "csubjpass",
+    }
+    found = {token.dep_ for token in doc if token.dep_ in interesting_deps}
+    return sorted(list(found))
+
+
 if __name__ == "__main__":
     nlp = create_nlp_pipeline()
     test_cases = [
