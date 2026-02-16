@@ -3,8 +3,9 @@ import { useSearchParams, useNavigate } from "react-router-dom";
 import { ArrowLeft } from "lucide-react";
 import clsx from "clsx";
 import SearchForm from "../components/SearchForm";
-import { SearchResult, Filters } from "../types";
+import { SearchResult, Filters, TaggingGroup } from "../types";
 import { AVAILABLE_TAGS, TAG_LABELS } from "../constants";
+import { Save, Trash2, CheckSquare, Square, Plus } from "lucide-react";
 
 const BATCH_SIZE = 50;
 
@@ -35,6 +36,20 @@ export default function TaggingPage() {
   const query = searchParams.get("q") || "";
   const [localQuery, setLocalQuery] = useState(query);
 
+  // Tagging group state
+  const [taggingGroups, setTaggingGroups] = useState<TaggingGroup[]>([]);
+  const [selectedGroupId, setSelectedGroupId] = useState<number | null>(null);
+  const [groupName, setGroupName] = useState("");
+  const [enabledTags, setEnabledTags] = useState<string[]>(AVAILABLE_TAGS);
+  const [saveLoading, setSaveLoading] = useState(false);
+
+  useEffect(() => {
+    fetch("/api/tagging-groups")
+      .then((res) => res.json())
+      .then((data) => setTaggingGroups(data))
+      .catch(console.error);
+  }, []);
+
   useEffect(() => {
     setLocalQuery(query);
   }, [query]);
@@ -60,6 +75,8 @@ export default function TaggingPage() {
     newFilters.subclause_types.forEach((t) =>
       params.append("subclause_types", t),
     );
+    // Persist group ID if present
+    if (selectedGroupId) params.set("group_id", String(selectedGroupId));
     setSearchParams(params);
   };
 
@@ -129,6 +146,79 @@ export default function TaggingPage() {
       startTagging();
     }
   }, [query, filtersKey]);
+
+  const handleSaveGroup = async () => {
+    if (!groupName) return;
+    setSaveLoading(true);
+    try {
+      const response = await fetch("/api/tagging-groups", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: groupName,
+          tags: enabledTags,
+          filters: { ...filters, q: localQuery },
+        }),
+      });
+      if (response.ok) {
+        const data = await response.json();
+        const newGroups = await (await fetch("/api/tagging-groups")).json();
+        setTaggingGroups(newGroups);
+        setSelectedGroupId(data.id);
+      }
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setSaveLoading(false);
+    }
+  };
+
+  const handleSelectGroup = (idStr: string) => {
+    if (!idStr) {
+      setSelectedGroupId(null);
+      setGroupName("");
+      setEnabledTags(AVAILABLE_TAGS);
+      return;
+    }
+    const id = parseInt(idStr);
+    const group = taggingGroups.find((g) => g.id === id);
+    if (group) {
+      setSelectedGroupId(id);
+      setGroupName(group.name);
+      setEnabledTags(group.tags || AVAILABLE_TAGS);
+      // Update filters and query
+      const groupFilters = group.filters || {};
+      setLocalQuery(groupFilters.q || "");
+      updateSearchParams(groupFilters.q || "", {
+        ...filters,
+        ...groupFilters,
+      });
+    }
+  };
+
+  const handleDeleteGroup = async (id: number) => {
+    if (!confirm("Are you sure you want to delete this tagging group?")) return;
+    try {
+      const response = await fetch(`/api/tagging-groups/${id}`, {
+        method: "DELETE",
+      });
+      if (response.ok) {
+        setTaggingGroups((prev) => prev.filter((g) => g.id !== id));
+        if (selectedGroupId === id) {
+          setSelectedGroupId(null);
+          setGroupName("");
+        }
+      }
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  const toggleTag = (tag: string) => {
+    setEnabledTags((prev) =>
+      prev.includes(tag) ? prev.filter((t) => t !== tag) : [...prev, tag],
+    );
+  };
 
   const currentSentence: SearchResult | null =
     currentIndex < batch.length ? batch[currentIndex] : null;
@@ -298,11 +388,11 @@ export default function TaggingPage() {
           handleClearTag();
           break;
         default: {
-          // Number keys 1-9 for tags
+          // Number keys for tags
           const num = parseInt(e.key);
-          if (num >= 1 && num <= AVAILABLE_TAGS.length) {
+          if (num >= 1 && num <= enabledTags.length) {
             e.preventDefault();
-            handleTagWord(AVAILABLE_TAGS[num - 1]);
+            handleTagWord(enabledTags[num - 1]);
           }
           break;
         }
@@ -329,6 +419,128 @@ export default function TaggingPage() {
         <h1 className="text-2xl font-bold" style={{ margin: 0 }}>
           Tagging Mode
         </h1>
+      </div>
+
+      <div className="card mb-8 overflow-hidden border-none shadow-lg bg-slate-50/50">
+        <div className="bg-slate-800 text-white px-6 py-4 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="p-2 bg-slate-700 rounded-lg">
+              <Save size={20} className="text-blue-400" />
+            </div>
+            <div>
+              <h2 className="text-lg font-bold leading-none">
+                Tagging Run Selection
+              </h2>
+              <p className="text-xs text-slate-400 mt-1">
+                Configure your search and allowed tags for this run
+              </p>
+            </div>
+          </div>
+          <div className="flex gap-2">
+            {selectedGroupId && (
+              <button
+                onClick={() => handleDeleteGroup(selectedGroupId)}
+                className="btn btn-sm bg-red-500/10 text-red-400 hover:bg-red-500/20 border-red-500/20"
+                title="Delete Group"
+              >
+                <Trash2 size={16} />
+              </button>
+            )}
+            <button
+              onClick={() => handleSelectGroup("")}
+              className="btn btn-sm bg-blue-500/10 text-blue-400 hover:bg-blue-500/20 border-blue-500/20 flex items-center gap-1"
+            >
+              <Plus size={16} />
+              New Run
+            </button>
+          </div>
+        </div>
+
+        <div className="p-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+            <div className="space-y-6">
+              <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
+                <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-2">
+                  1. Choose a Group
+                </label>
+                <select
+                  value={selectedGroupId || ""}
+                  onChange={(e) => handleSelectGroup(e.target.value)}
+                  className="input w-full bg-slate-50 border-slate-200 focus:bg-white transition-colors"
+                >
+                  <option value="">-- Start Fresh Run --</option>
+                  {taggingGroups.map((g) => (
+                    <option key={g.id} value={g.id}>
+                      {g.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
+                <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-2">
+                  2. Name this Run
+                </label>
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    value={groupName}
+                    onChange={(e) => setGroupName(e.target.value)}
+                    placeholder="e.g., Verb Tense Analysis"
+                    className="input flex-1 bg-slate-50 border-slate-200 focus:bg-white transition-colors"
+                  />
+                  <button
+                    onClick={handleSaveGroup}
+                    disabled={saveLoading || !groupName}
+                    className="btn btn-primary flex items-center gap-2 shadow-md shadow-blue-200"
+                  >
+                    <Save size={18} />
+                    {selectedGroupId ? "Update" : "Save"}
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
+              <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-3">
+                3. Configure Tags
+              </label>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-2">
+                {AVAILABLE_TAGS.map((tag) => (
+                  <label
+                    key={tag}
+                    className={clsx(
+                      "flex items-center gap-3 p-2 rounded-lg cursor-pointer transition-all border",
+                      enabledTags.includes(tag)
+                        ? "bg-blue-50 border-blue-100 text-blue-700"
+                        : "bg-slate-50 border-slate-100 text-slate-600 hover:bg-slate-100",
+                    )}
+                  >
+                    <button
+                      onClick={() => toggleTag(tag)}
+                      className={clsx(
+                        "transition-colors",
+                        enabledTags.includes(tag)
+                          ? "text-blue-600"
+                          : "text-slate-400",
+                      )}
+                      type="button"
+                    >
+                      {enabledTags.includes(tag) ? (
+                        <CheckSquare size={20} />
+                      ) : (
+                        <Square size={20} />
+                      )}
+                    </button>
+                    <span className="text-sm font-medium">
+                      {TAG_LABELS[tag] || tag}
+                    </span>
+                  </label>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
 
       <SearchForm
@@ -531,7 +743,7 @@ export default function TaggingPage() {
               </div>
 
               <div className="flex flex-wrap gap-2">
-                {AVAILABLE_TAGS.map((tag, i) => (
+                {enabledTags.map((tag, i) => (
                   <button
                     key={tag}
                     onClick={() => handleTagWord(tag)}
@@ -616,7 +828,7 @@ export default function TaggingPage() {
           >
             {[
               { keys: "← →", label: "Select word" },
-              { keys: "1-" + AVAILABLE_TAGS.length, label: "Tag" },
+              { keys: "1-" + enabledTags.length, label: "Tag" },
               { keys: "⌫", label: "Clear tag" },
               { keys: "↵", label: "Next sentence" },
             ].map(({ keys, label }) => (

@@ -14,6 +14,7 @@ export interface SearchResult {
 }
 
 export interface Filters {
+  q?: string;
   use_lemma: boolean;
   is_hypothetical: boolean;
   is_command: boolean;
@@ -21,6 +22,13 @@ export interface Filters {
   untagged_only: boolean;
   subclause_types: string[];
   tag: string;
+}
+
+export interface TaggingGroup {
+  id?: number;
+  name: string;
+  tags: string[];
+  filters: Filters;
 }
 
 export interface ActiveWord {

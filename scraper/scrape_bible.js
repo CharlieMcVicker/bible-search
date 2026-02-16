@@ -85,7 +85,7 @@ async function fetchChapter(book, chapter, version) {
             headers: {
                 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
             },
-            timeout: 10000 
+            timeout: 10000
         });
         const $ = cheerio.load(response.data);
         const verses = {};
@@ -98,35 +98,35 @@ async function fetchChapter(book, chapter, version) {
         }
 
         // Iterate over text elements
-        // Strategy: 
+        // Strategy:
         // 1. Identify verse start by .versenum or .chapternum
         // 2. Extract text, cleaning up footnotes/crossrefs
-        
+
         passageContent.find('.text').each((i, el) => {
             const $el = $(el);
-            
+
             // Get verse number
             let verseNum = $el.find('.versenum').text().trim();
-            
+
             // Handle chapter start (e.g. "1" or "18" in .chapternum class)
             // This usually indicates Verse 1
             if (!verseNum && $el.find('.chapternum').length > 0) {
                 verseNum = "1";
             }
-            
-            // If no verse number found in this element, it might be a continuation of the previous verse 
-            // OR it's just some other text. 
+
+            // If no verse number found in this element, it might be a continuation of the previous verse
+            // OR it's just some other text.
             // However, BibleGateway usually puts each verse in a separate element with class 'text'.
             // Sometimes multiple 'text' elements belong to the same verse (e.g. poetry).
             // But we need to be careful not to overwrite or lose data.
-            
+
             // If verseNum is present, we start a new verse entry.
             // If not, we might append to the last verse?
             // Checking the class list might help: "text Book-Ch-Verse"
             const classList = $el.attr('class') || '';
-            const match = classList.match(/text [^\s]+-(\d+)-(\d+)/); // strict pattern? 
+            const match = classList.match(/text [^\s]+-(\d+)-(\d+)/); // strict pattern?
             // Classes are like "text Gen-1-1" or "text 1Cor-1-1"
-            
+
             // If we can't find a verse number in the text, try extracting from class
             if (!verseNum && match) {
                verseNum = match[2]; // The verse part
@@ -141,11 +141,11 @@ async function fetchChapter(book, chapter, version) {
             // Clean up text
             const $clone = $el.clone();
             $clone.find('.versenum, .chapternum, .crossreference, .footnote, .footnotes').remove();
-            
+
             // Also remove headers if they are inside (usually they are outside .text)
-            
+
             let text = $clone.text().replace(/\s+/g, ' ').trim();
-            
+
             if (verses[verseNum]) {
                 verses[verseNum] += " " + text;
             } else {
@@ -177,7 +177,7 @@ async function scrape() {
 
         for (let chapter = 1; chapter <= book.chapters; chapter++) {
             const outputFile = path.join(bookDir, `${chapter}.json`);
-            
+
             // Overwriting enabled for repull
             // if (fs.existsSync(outputFile)) {
             //     // console.log(`  Skipping ${book.name} ${chapter} (already exists)`);
@@ -185,18 +185,18 @@ async function scrape() {
             // }
 
             console.log(`  Fetching ${book.name} ${chapter}...`);
-            
+
             // Fetch all versions in parallel for this chapter
             const promises = versions.map(v => fetchChapter(book.name, chapter, v));
             const results = await Promise.all(promises);
-            
+
             const kjv = results[0];
             const web = results[1];
-            
+
             // Validate we got something
             if (Object.keys(kjv).length === 0 && Object.keys(web).length === 0) {
                 console.error(`  FAILED to get data for ${book.name} ${chapter}`);
-                continue; 
+                continue;
             }
 
             // Align
@@ -205,9 +205,9 @@ async function scrape() {
                 ...Object.keys(web),
                 ...Object.keys(results[2] || {})
             ]);
-            
+
             const sortedVerses = Array.from(allVerses).sort((a, b) => parseInt(a) - parseInt(b));
-            
+
             const chr = results[2] || {};
 
             const aligned = sortedVerses.map(v => ({
@@ -216,9 +216,9 @@ async function scrape() {
                 web: web[v] || "",
                 chr: chr[v] || ""
             }));
-            
+
             fs.writeFileSync(outputFile, JSON.stringify(aligned, null, 2));
-            
+
             // Rate limiting
             await new Promise(r => setTimeout(r, 500));
         }

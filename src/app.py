@@ -9,7 +9,7 @@ from flask import (
     send_from_directory,
 )
 from peewee import SqliteDatabase
-from src.models import db, Sentence, SentenceTag
+from src.models import db, Sentence, SentenceTag, TaggingGroup
 from src.search import SearchEngine
 import time
 import os
@@ -152,6 +152,49 @@ def remove_tag(ref_id):
     )
     rows = query.execute()
     return jsonify({"status": "success", "deleted": rows})
+
+
+@app.route("/api/tagging-groups", methods=["GET"])
+def list_tagging_groups():
+    groups = TaggingGroup.select().order_by(TaggingGroup.name)
+    return jsonify(
+        [
+            {
+                "id": g.id,
+                "name": g.name,
+                "tags": g.tags,
+                "query": g.query.get("q", "") if isinstance(g.query, dict) else "",
+                "filters": g.query,
+            }
+            for g in groups
+        ]
+    )
+
+
+@app.route("/api/tagging-groups", methods=["POST"])
+def save_tagging_group():
+    data = request.json
+    name = data.get("name")
+    tags = data.get("tags", [])
+    query = data.get("filters", {})
+
+    if not name:
+        abort(400, description="Missing name")
+
+    # Use name as a unique identifier for simplicity or use ref_id if you want
+    # For now, let's just use replace or update by name
+    group, created = TaggingGroup.get_or_create(name=name, defaults={"ref_id": name})
+    group.tags = tags
+    group.query = query
+    group.save()
+
+    return jsonify({"status": "success", "id": group.id})
+
+
+@app.route("/api/tagging-groups/<int:group_id>", methods=["DELETE"])
+def delete_tagging_group(group_id):
+    TaggingGroup.delete().where(TaggingGroup.id == group_id).execute()
+    return jsonify({"status": "success"})
 
 
 @app.route("/<path:path>")

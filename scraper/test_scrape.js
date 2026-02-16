@@ -7,10 +7,10 @@ async function test() {
         headers: { 'User-Agent': 'Mozilla/5.0' }
     });
     const $ = cheerio.load(res.data);
-    
+
     // Select inside .passage-text or .passage-content
     // Try to find verses.
-    
+
     console.log('Searching in .passage-content...');
     $('.passage-content .text').each((i, el) => {
         if (i < 5) {
